@@ -4,7 +4,6 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  Logger,
 } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import * as moment from 'moment';
@@ -19,7 +18,6 @@ import { TokenService } from './core/services/token.service';
 
 @Injectable()
 export class AppService {
-  logger: Logger
   constructor(
     @Inject('MAIL_SERVICE') private readonly mailClient: ClientProxy,
     private configService: ConfigService,
@@ -50,7 +48,7 @@ export class AppService {
     try {
       const user = await this.getUserById(authUserId);
       if (!user) {
-        throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+        throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
       const token = nanoid(10);
       const save_token = await this.prisma.token.create({
@@ -78,7 +76,7 @@ export class AppService {
       const { newPassword, token } = data;
       const user = await this.prisma.user.findUnique({ where: { id: authUserId } });
       if (!user) {
-        throw new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+        throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
       const getActiveToken = await this.prisma.token.findFirst({
         where: {
@@ -89,7 +87,7 @@ export class AppService {
       })
       if (!getActiveToken) {
         throw new HttpException(
-          'ACTIVE_TOKEN_NOT_FOUND',
+          'active_token_not_found',
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -99,7 +97,7 @@ export class AppService {
       )
       if (moment(getActiveToken.createdAt).isAfter(addExp)) {
         throw new HttpException(
-          'FORGOT_TOKEN_EXPIRED',
+          'forgot_token_expired',
           HttpStatus.INTERNAL_SERVER_ERROR,
         )
       }
@@ -143,12 +141,12 @@ export class AppService {
       const checkUser = await this.prisma.user.findUnique({ where: { email } })
       if (!checkUser) {
         throw new HttpException(
-          'USER_NOT_FOUND',
+          'user_not_found',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
       if (this.compare(password, checkUser.password)) {
-        throw new HttpException('INVALID_PASSWORD', HttpStatus.CONFLICT);
+        throw new HttpException('invalid_password', HttpStatus.CONFLICT);
       }
       const createTokenResponse = await this.tokenService.createToken(checkUser.id)
       delete checkUser.password
@@ -157,7 +155,7 @@ export class AppService {
         user: checkUser,
       }
     } catch (e) {
-      this.logger.error(e)
+      console.log(e)
       throw new InternalServerErrorException(e)
     }
   }
@@ -167,7 +165,7 @@ export class AppService {
       const { email, password, firstname, lastname } = data;
       const checkUser = await this.prisma.user.findUnique({ where: { email } });
       if (checkUser) {
-        throw new HttpException('USER_EXISTS', HttpStatus.CONFLICT);
+        throw new HttpException('user_exists', HttpStatus.CONFLICT);
       }
       const hashPassword = this.createHash(password);
       const newUser = {} as User;
@@ -184,7 +182,6 @@ export class AppService {
         user,
       };
     } catch (e) {
-      this.logger.error(e)
       throw new InternalServerErrorException(e)
     }
   }

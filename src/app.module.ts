@@ -6,18 +6,25 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigService } from './config/config.service';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './core/exception.interceptor';
-import { LocalizationModule } from '@squareboat/nestjs-localization/dist/src';
-import * as path from 'path';
 import { PrismaService } from './core/services/prisma.service';
 import { ClientAuthGuard } from './core/guards/auth.guard';
 import { TokenService } from './core/services/token.service';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
 
 @Module({
   imports: [
     ConfigModule,
-    LocalizationModule.register({
-      path: path.join(__dirname, '/locales/'),
-      fallbackLang: 'en',
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+      ],
     }),
     ClientsModule.registerAsync([
       {

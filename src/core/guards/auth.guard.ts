@@ -15,7 +15,7 @@ export class ClientAuthGuard implements CanActivate {
     private tokenService: TokenService,
   ) { }
 
-  public async canActivate(context: ExecutionContext): Promise<boolean> {
+  public canActivate(context: ExecutionContext): boolean {
     try {
       const request = context.getArgByIndex(0);
       const allowUnauthorizedRequest = this.reflector.get<boolean>('allowUnauthorizedRequest', context.getHandler());
@@ -27,7 +27,7 @@ export class ClientAuthGuard implements CanActivate {
         throw new UnauthorizedException();
       }
       const token = Authorization.replace('Bearer ', '');
-      const decode = await this.tokenService.decodeToken(token);
+      const decode = this.tokenService.decodeToken(token);
       if (!decode) {
         throw new UnauthorizedException();
       }

@@ -5,22 +5,21 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { __ } from '@squareboat/nestjs-localization/dist/src';
 import { Response, Request } from 'express';
+import { getI18nContextFromRequest } from 'nestjs-i18n';
 
 @Catch(HttpException)
 export class AllExceptionsFilter implements ExceptionFilter {
   async catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
     const context = host.switchToHttp();
+    const request = context.getRequest<Request>();
     const response = context.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-    const lang = request.headers['accept-language'] || 'en';
+    const i18n = getI18nContextFromRequest(request)
     const statusCode = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
-    const message = exception instanceof HttpException ? exception.message || __(exception.message, lang) : 'Internal server error'
+    const message = await i18n.translate(`auth.${exception.message}`, { lang: i18n.lang })
     response.status(statusCode).json({
       statusCode,
-      message,
+      message: message || 'Internal server error',
     });
   }
 }

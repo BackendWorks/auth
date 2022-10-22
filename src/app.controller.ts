@@ -15,7 +15,6 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { IGetUserById } from './core/interfaces/IMessagePatterns';
 import { AllowUnauthorizedRequest } from './core/allow.unauthorized.decorator';
 import { JwtPayload } from 'jsonwebtoken';
-import { IDecodeResponse } from '../../auth/src/core/interfaces/IDecodeResponse';
 import { ITokenResponse } from './core/interfaces/ITokenResponse';
 import { Token } from '@prisma/client';
 import { TokenService } from './core/services/token.service';
@@ -33,7 +32,7 @@ export class AppController {
   @MessagePattern('token_decode')
   public async decodeToken(
     @Payload() data: string,
-  ): Promise<string | JwtPayload | IDecodeResponse> {
+  ): Promise<string | JwtPayload> {
     return this.tokenService.decodeToken(data);
   }
 

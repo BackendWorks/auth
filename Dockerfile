@@ -4,4 +4,5 @@ RUN mkdir -p /var/www/auth
 WORKDIR /var/www/auth
 ADD . /var/www/auth
 RUN npm install
+RUN npx prisma generate
 CMD npm start

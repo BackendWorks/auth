@@ -1,8 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { JwtPayload, decode, sign } from 'jsonwebtoken';
+import { decode, sign } from 'jsonwebtoken';
 import { ConfigService } from "src/config/config.service";
-import { IDecodeResponse } from "../interfaces/IDecodeResponse";
-import { ITokenResponse } from "../interfaces/ITokenResponse";
+import { ITokenResponse } from "../interfaces";
 
 @Injectable()
 export class TokenService {
@@ -12,17 +11,17 @@ export class TokenService {
         const accessExp = this.configService.get('accessExp');
         const refreshExp = this.configService.get('refreshExp');
         const secretKey = this.configService.get('secretKey');
-        const accessToken = sign(payload, secretKey, { expiresIn: accessExp });
-        const refreshToken = sign(payload, secretKey, { expiresIn: refreshExp });
+        const accessToken = sign({ userId: payload }, secretKey, { expiresIn: accessExp });
+        const refreshToken = sign({ userId: payload }, secretKey, { expiresIn: refreshExp });
         return {
             accessToken,
             refreshToken,
         };
     }
 
-    public async decodeToken(
+    public decodeToken(
         token: string,
-    ): Promise<string | JwtPayload | IDecodeResponse> {
+    ): any {
         return decode(token);
     }
 

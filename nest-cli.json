@@ -3,7 +3,7 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "assets": [
-      "locales/**/*"
+      { "include": "i18n/**/*", "watchAssets": true }
     ]
   }
 }

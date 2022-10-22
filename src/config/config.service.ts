@@ -13,7 +13,11 @@ export class ConfigService {
     this.config.auth_queue = process.env.RABBITMQ_AUTH_QUEUE;
     this.config.mailer_queue = process.env.RABBITMQ_MAILER_QUEUE;
     this.config.logger_queue = process.env.RABBITMQ_LOGGER_QUEUE;
+    this.config.accessExp = process.env.ACCESS_EXP;
+    this.config.refreshExp = process.env.REFRESH_EXP;
+    this.config.secretKey = process.env.APP_SECRET;
     this.config.env = process.env.NODE_ENV;
+    this.config.tokenExp = process.env.PASSWORD_TOKEN_EXP
   }
 
   public get(key: string): any {
