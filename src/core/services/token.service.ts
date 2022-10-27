@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { decode, sign } from 'jsonwebtoken';
-import { ConfigService } from "src/config/config.service";
+import { ConfigService } from "../../config/config.service";
 import { ITokenResponse } from "../interfaces";
 
 @Injectable()

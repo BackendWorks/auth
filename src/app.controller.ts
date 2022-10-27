@@ -3,11 +3,14 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  HttpStatus,
   Post,
   Put,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Response } from 'express'
 import { CreateUserDto, ForgotPasswordDto, LoginDto } from './core/dtos';
 import { IAuthPayload } from './core/interfaces';
 import { CurrentUser } from './core/user.decorator';
@@ -18,11 +21,22 @@ import { JwtPayload } from 'jsonwebtoken';
 import { ITokenResponse } from './core/interfaces/ITokenResponse';
 import { Token } from '@prisma/client';
 import { TokenService } from './core/services/token.service';
+import { PrismaService } from './core/services/prisma.service';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
 export class AppController {
-  constructor(private readonly appService: AppService, private tokenService: TokenService) {}
+  constructor(private readonly appService: AppService, private tokenService: TokenService, private prisma: PrismaService) { }
+
+  @AllowUnauthorizedRequest()
+  @Get('/health')
+  public healthCheck(@Res() res: Response) {
+    this.prisma.$connect().then(() => {
+      return res.status(HttpStatus.OK).json({ stauts: "ok" });
+    }).catch((e) => {
+      return res.status(HttpStatus.OK).json({ stauts: "down", error: e });
+    })
+  }
 
   @MessagePattern('token_create')
   public async createToken(@Payload() data: any): Promise<ITokenResponse> {
