@@ -14,7 +14,7 @@ export interface ICreateTokenPayload {
   userId: number;
 }
 
-export interface IGetUserById extends User {}
+export type IGetUserById = User;
 
 export interface IMailPayload {
   template: keyof typeof EmailTemplates;
