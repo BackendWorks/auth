@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from './config/config.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigService } from './config/config.service';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { AllExceptionsFilter } from './core/exception.interceptor';
-import { PrismaService } from './core/services/prisma.service';
-import { ClientAuthGuard } from './core/guards/auth.guard';
-import { TokenService } from './core/services/token.service';
+import { PrismaService, TokenService } from './core/services';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import * as path from 'path';
+import { ConfigService } from './core/services';
+import { HealthController } from './health.controller';
+import { ConfigModule } from './config/config.module';
+import { TerminusModule } from '@nestjs/terminus';
+import { join } from 'path';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './core/guards';
 
 @Module({
   imports: [
@@ -18,7 +18,7 @@ import * as path from 'path';
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
+        path: join(__dirname, '/i18n/'),
         watch: true,
       },
       resolvers: [
@@ -43,17 +43,17 @@ import * as path from 'path';
         inject: [ConfigService],
       },
     ]),
+    TerminusModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
-    { provide: APP_FILTER, useClass: AllExceptionsFilter },
     AppService,
     PrismaService,
     TokenService,
     {
       provide: APP_GUARD,
-      useClass: ClientAuthGuard,
+      useClass: JwtAuthGuard,
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

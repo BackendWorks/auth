@@ -1,28 +1,36 @@
-import { Injectable } from "@nestjs/common";
-import { decode, sign } from 'jsonwebtoken';
-import { ConfigService } from "../../config/config.service";
-import { ITokenResponse } from "../interfaces";
+import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { ConfigService } from '../../config/config.service';
 
 @Injectable()
 export class TokenService {
-    constructor(private configService: ConfigService) { }
+  private secret: string;
+  constructor(private configService: ConfigService) {
+    this.secret = this.configService.get('authSecret');
+  }
 
-    public createToken(payload: any): ITokenResponse {
-        const accessExp = this.configService.get('accessExp');
-        const refreshExp = this.configService.get('refreshExp');
-        const secretKey = this.configService.get('secretKey');
-        const accessToken = sign({ userId: payload }, secretKey, { expiresIn: accessExp });
-        const refreshToken = sign({ userId: payload }, secretKey, { expiresIn: refreshExp });
-        return {
-            accessToken,
-            refreshToken,
-        };
-    }
+  async validateToken(
+    token: string,
+  ): Promise<{ userId: number; role: Role } | string | JwtPayload> {
+    return verify(token, this.secret);
+  }
 
-    public decodeToken(
-        token: string,
-    ): any {
-        return decode(token);
-    }
-
+  async generateToken(payload: { userId: number; role: Role }) {
+    return sign(
+      {
+        userId: payload.userId,
+        role: payload.role,
+      },
+      this.secret,
+      {
+        expiresIn: '24h',
+        header: {
+          typ: 'JWT',
+          alg: 'HS256',
+          kid: this.configService.get('kid'),
+        },
+      },
+    );
+  }
 }

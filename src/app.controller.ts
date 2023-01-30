@@ -1,76 +1,47 @@
-import {
-  Body,
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  HttpStatus,
-  Post,
-  Put,
-  Res,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { Response } from 'express'
 import { CreateUserDto, ForgotPasswordDto, LoginDto } from './core/dtos';
-import { IAuthPayload } from './core/interfaces';
-import { CurrentUser } from './core/user.decorator';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { IGetUserById } from './core/interfaces/IMessagePatterns';
-import { AllowUnauthorizedRequest } from './core/allow.unauthorized.decorator';
+import { IGetUserById, IAuthPayload } from './types';
+import { Public, CurrentUser } from './core/decorators';
+import { Token, User } from '@prisma/client';
+import { JwtAuthGuard, RolesGuard } from './core/guards';
+import { TokenService } from './core/services';
 import { JwtPayload } from 'jsonwebtoken';
-import { ITokenResponse } from './core/interfaces/ITokenResponse';
-import { Token } from '@prisma/client';
-import { TokenService } from './core/services/token.service';
-import { PrismaService } from './core/services/prisma.service';
 
 @Controller()
-@UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(JwtAuthGuard)
+@UseGuards(RolesGuard)
 export class AppController {
-  constructor(private readonly appService: AppService, private tokenService: TokenService, private prisma: PrismaService) { }
-
-  @AllowUnauthorizedRequest()
-  @Get('/health')
-  public healthCheck(@Res() res: Response) {
-    this.prisma.$connect().then(() => {
-      return res.status(HttpStatus.OK).json({ stauts: "ok" });
-    }).catch((e) => {
-      return res.status(HttpStatus.OK).json({ stauts: "down", error: e });
-    })
-  }
-
-  @MessagePattern('token_create')
-  public async createToken(@Payload() data: any): Promise<ITokenResponse> {
-    return this.tokenService.createToken(data.id);
-  }
-
-  @MessagePattern('token_decode')
-  public async decodeToken(
-    @Payload() data: string,
-  ): Promise<string | JwtPayload> {
-    return this.tokenService.decodeToken(data);
-  }
+  constructor(
+    private appService: AppService,
+    private tokenService: TokenService,
+  ) {}
 
   @MessagePattern('get_user_by_id')
-  public async getUserById(
-    @Payload() data: { userId: number },
-  ): Promise<IGetUserById> {
-    return this.appService.getUserById(data.userId);
+  public async getUserById(@Payload() data: string): Promise<IGetUserById> {
+    return this.appService.getUserById(JSON.parse(data).userId);
   }
 
   @MessagePattern('get_device_id')
-  public async getDeviceById(
-    @Payload() data: { userId: number },
-  ): Promise<string> {
-    return this.appService.getDeviceById(data.userId);
+  public async getDeviceById(@Payload() data: string): Promise<string> {
+    return this.appService.getDeviceById(JSON.parse(data).userId);
   }
 
-  @AllowUnauthorizedRequest()
+  @MessagePattern('get_user_from_token')
+  public async getUserByToken(
+    @Payload() data: string,
+  ): Promise<User | JwtPayload | string> {
+    return this.tokenService.validateToken(JSON.parse(data).token);
+  }
+
+  @Public()
   @Post('/login')
   login(@Body() data: LoginDto): Promise<IAuthPayload> {
     return this.appService.login(data);
   }
 
-  @AllowUnauthorizedRequest()
+  @Public()
   @Post('/signup')
   signup(@Body() data: CreateUserDto): Promise<IAuthPayload> {
     return this.appService.signup(data);

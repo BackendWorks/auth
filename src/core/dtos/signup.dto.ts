@@ -4,21 +4,21 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class CreateUserDto {
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'No email provided' })
+  @IsNotEmpty({ message: 'email not provided' })
   public email: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'No password provided' })
+  @IsNotEmpty({ message: 'password not provided' })
   public password: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'No firstname provided' })
+  @IsNotEmpty({ message: 'firstname not provided' })
   public firstname: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'No lastname provided' })
+  @IsNotEmpty({ message: 'lastname not provided' })
   public lastname: string;
 }
