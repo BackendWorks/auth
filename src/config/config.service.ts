@@ -1,26 +1,35 @@
+import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 config();
-import { Injectable } from '@nestjs/common';
+
+interface Config {
+  servicePort: string;
+  rb_url: string;
+  auth_queue: string;
+  mailer_queue: string;
+  accessExp: string;
+  refreshExp: string;
+  authSecret: string;
+  kid: string;
+  env: string;
+  tokenExp: string;
+}
 
 @Injectable()
 export class ConfigService {
-  private config: { [key: string]: any } = {};
+  private config = {} as Config;
   constructor() {
-    this.config.servicePort = process.env.AUTH_PORT;
-    this.config.service = process.env.AUTH_HOST;
+    this.config.servicePort = process.env.PORT;
     this.config.rb_url = process.env.RABBITMQ_URL;
-    this.config.token_queue = process.env.RABBITMQ_TOKEN_QUEUE;
     this.config.auth_queue = process.env.RABBITMQ_AUTH_QUEUE;
     this.config.mailer_queue = process.env.RABBITMQ_MAILER_QUEUE;
-    this.config.logger_queue = process.env.RABBITMQ_LOGGER_QUEUE;
-    this.config.accessExp = process.env.ACCESS_EXP;
-    this.config.refreshExp = process.env.REFRESH_EXP;
-    this.config.secretKey = process.env.APP_SECRET;
+    this.config.authSecret = process.env.AUTH_SECRET;
+    this.config.kid = process.env.KID;
     this.config.env = process.env.NODE_ENV;
-    this.config.tokenExp = process.env.PASSWORD_TOKEN_EXP
+    this.config.tokenExp = process.env.TOKEN_EXP;
   }
 
-  public get(key: string): any {
+  public get(key: keyof Config): any {
     return this.config[key];
   }
 }

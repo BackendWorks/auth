@@ -3,7 +3,6 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {
@@ -12,29 +11,29 @@ datasource db {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  email          String   @unique
-  firstName      String
-  lastName       String
-  password       String
-  role           Role     @default(USER)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  profilePicture String?
-  phone          String?
-  deviceToken    String?  @unique
-  tokens         Token[]
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  first_name   String
+  last_name    String
+  password     String
+  role         Role     @default(USER)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  profile      String?
+  phone        String?
+  device_token String?  @unique
+  tokens       Token[]
 }
 
 model Token {
-  id        Int         @id @default(autoincrement())
-  token     String      @unique
-  status    TokenStatus @default(ISSUED)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  expiredAt DateTime?
-  user      User        @relation(fields: [userId], references: [id])
-  userId    Int
+  id         Int         @id @default(autoincrement())
+  token      String      @unique
+  status     TokenStatus @default(ISSUED)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  expired_at DateTime?
+  user       User        @relation(fields: [user_id], references: [id])
+  user_id    Int
 }
 
 enum TokenStatus {
