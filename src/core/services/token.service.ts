@@ -28,7 +28,6 @@ export class TokenService {
         header: {
           typ: 'JWT',
           alg: 'HS256',
-          kid: this.configService.get('kid'),
         },
       },
     );

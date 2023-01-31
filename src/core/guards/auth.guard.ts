@@ -16,14 +16,11 @@ export class JwtAuthGuard {
 
   canActivate(context: ExecutionContext) {
     const type = context.getType();
-    if (type === 'rpc') {
-      return true;
-    }
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) {
+    if (isPublic || type === 'rpc') {
       return true;
     }
     const request = context.switchToHttp().getRequest();

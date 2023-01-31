@@ -10,7 +10,6 @@ interface Config {
   accessExp: string;
   refreshExp: string;
   authSecret: string;
-  kid: string;
   env: string;
   tokenExp: string;
 }
@@ -24,7 +23,6 @@ export class ConfigService {
     this.config.auth_queue = process.env.RABBITMQ_AUTH_QUEUE;
     this.config.mailer_queue = process.env.RABBITMQ_MAILER_QUEUE;
     this.config.authSecret = process.env.AUTH_SECRET;
-    this.config.kid = process.env.KID;
     this.config.env = process.env.NODE_ENV;
     this.config.tokenExp = process.env.TOKEN_EXP;
   }
