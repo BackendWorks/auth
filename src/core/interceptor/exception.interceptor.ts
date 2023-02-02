@@ -15,7 +15,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<Request>();
     const response = context.getResponse<Response>();
     const i18n = getI18nContextFromRequest(request);
-    if (exception.getStatus() === 400) response.send(exception.getResponse());
+    if (exception.getStatus() === 400) return response.send(exception.getResponse());
     const statusCode =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -25,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           lang: i18n.lang,
         })
       : 'Internal server error';
-    response.status(statusCode).json({
+    return response.status(statusCode).json({
       statusCode,
       message,
     });
