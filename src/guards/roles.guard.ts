@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { TokenService } from '../services';
+import { TokenService } from 'src/services';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -14,7 +14,7 @@ export class RolesGuard implements CanActivate {
     private tokenService: TokenService,
   ) {}
 
-  canActivate(context: ExecutionContext) {
+  async canActivate(context: ExecutionContext) {
     const requiredRoles = this.reflector.getAllAndOverride('roles', [
       context.getHandler(),
       context.getClass(),
@@ -24,10 +24,10 @@ export class RolesGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest();
     let token = request.headers['authorization'];
-    token = token.replce('Bearer ', '');
     if (!token) {
       throw new UnauthorizedException();
     }
+    token = token.replace('Bearer ', '');
     const user = this.tokenService.validateToken(token);
     if (!user) {
       throw new UnauthorizedException();

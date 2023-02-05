@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { ConfigService } from '../../config/config.service';
+import { ConfigService } from '../config/config.service';
 
 @Injectable()
 export class TokenService {
   private secret: string;
+  private key: string;
   constructor(private configService: ConfigService) {
     this.secret = this.configService.get('authSecret');
+    this.key = this.configService.get('authKey');
   }
 
-  async validateToken(
+  validateToken(
     token: string,
-  ): Promise<{ userId: number; role: Role } | string | JwtPayload> {
+  ): { userId: number; role: Role } | string | JwtPayload {
     return verify(token, this.secret);
   }
 
-  async generateToken(payload: { userId: number; role: Role }) {
+  generateToken(payload: { userId: number; role: Role }) {
     return sign(
       {
         userId: payload.userId,
@@ -26,6 +28,7 @@ export class TokenService {
       {
         expiresIn: '24h',
         header: {
+          kid: this.key,
           typ: 'JWT',
           alg: 'HS256',
         },

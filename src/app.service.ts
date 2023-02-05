@@ -1,124 +1,63 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
-import * as moment from 'moment';
-import { CreateUserDto, ForgotPasswordDto, LoginDto } from './core/dtos';
+import { compareSync, hashSync } from 'bcrypt';
+import { User, Role } from '@prisma/client';
 import { ClientProxy } from '@nestjs/microservices';
-import { IMailPayload } from './types';
-import { PrismaService } from './core/services';
-import { Token, User, Role, TokenStatus } from '@prisma/client';
 import {
-  ConfigService,
-  TokenService,
-  compareHash,
-  createHash,
-} from './core/services';
+  CreateUserDto,
+  ForgotPasswordDto,
+  LoginDto,
+  UpdateProfileDto,
+} from './dtos';
+import { IMailPayload } from './types';
+import { TokenService, PrismaService } from './services';
+import { ChangePasswordDto } from './dtos/change-password.dto';
+import * as moment from 'moment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AppService {
   constructor(
     @Inject('MAIL_SERVICE') private readonly mailClient: ClientProxy,
-    private configService: ConfigService,
+    @Inject('FILES_SERVICE') private readonly fileClient: ClientProxy,
     private prisma: PrismaService,
     private tokenService: TokenService,
   ) {
     this.mailClient.connect();
+    this.fileClient.connect();
   }
 
   public getUserById(userId: number) {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }
 
-  public async getDeviceById(userId: number): Promise<string> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    return user.device_token;
+  public getUserByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
   }
 
-  public async getForgotPasswordToken(authUserId: number): Promise<Token> {
+  public async sendForgotPasswordEmail(data: ForgotPasswordDto) {
     try {
-      const user = await this.getUserById(authUserId);
+      const { email } = data;
+      const user = await this.getUserByEmail(email);
       if (!user) {
         throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
       const token = nanoid(10);
-      const save_token = await this.prisma.token.create({
+      await this.prisma.token.create({
         data: {
+          expire: new Date(new Date().getTime() + 60000),
           token,
           user: {
             connect: {
-              id: authUserId,
+              email,
             },
           },
-          status: TokenStatus.ISSUED,
-        },
-      });
-      return save_token;
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
-  }
-
-  public async changePassword(
-    data: ForgotPasswordDto,
-    authUserId: number,
-  ): Promise<void> {
-    try {
-      const { newPassword, token } = data;
-      const user = await this.prisma.user.findUnique({
-        where: { id: authUserId },
-      });
-      if (!user) {
-        throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
-      }
-      const getActiveToken = await this.prisma.token.findFirst({
-        where: {
-          user: { id: authUserId },
-          status: TokenStatus.ISSUED,
-          token,
-        },
-      });
-      if (!getActiveToken) {
-        throw new HttpException(
-          'active_token_not_found',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      const addExp = moment().add(
-        Number(this.configService.get('tokenExp')),
-        'second',
-      );
-      if (moment(getActiveToken.created_at).isAfter(addExp)) {
-        throw new HttpException(
-          'forgot_token_expired',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      const hashPassword = createHash(newPassword);
-      await this.prisma.user.update({
-        where: {
-          id: authUserId,
-        },
-        data: {
-          password: hashPassword,
-        },
-      });
-      await this.prisma.token.update({
-        where: {
-          id: getActiveToken.id,
-        },
-        data: {
-          status: TokenStatus.EXPIRED,
         },
       });
       const payload: IMailPayload = {
         template: 'FORGOT_PASSWORD',
         payload: {
-          emails: [user.email],
+          emails: [email],
           data: {
             firstName: user.first_name,
             lastName: user.last_name,
@@ -128,63 +67,157 @@ export class AppService {
       };
       this.mailClient.emit('send_email', payload);
     } catch (e) {
-      throw new InternalServerErrorException(e);
+      throw e;
+    }
+  }
+
+  public async changePassword(data: ChangePasswordDto) {
+    try {
+      const { password, token } = data;
+      const checkToken = await this.prisma.token.findUnique({
+        where: { token },
+      });
+      if (!checkToken) {
+        throw new HttpException('forgot_token_not_found', HttpStatus.NOT_FOUND);
+      }
+      const checkExpire = moment().isAfter(checkToken.expire);
+      if (!checkExpire) {
+        throw new HttpException('forgot_token_expired', HttpStatus.BAD_REQUEST);
+      }
+      const hashPassword = hashSync(password, 10);
+      await this.prisma.user.update({
+        where: {
+          id: checkToken.user_id,
+        },
+        data: {
+          password: hashPassword,
+        },
+      });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  public async updateProfile(data: UpdateProfileDto, userId: number) {
+    try {
+      const { email, firstName, lastName, phone, deviceToken, profile } = data;
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          device_token: deviceToken?.trim(),
+          email: email?.trim(),
+          first_name: firstName?.trim(),
+          last_name: lastName?.trim(),
+          phone: phone?.trim(),
+          profile,
+        },
+      });
+      delete user.password;
+      if (user.profile) {
+        const file = await firstValueFrom(
+          this.fileClient.send(
+            'get_file_by_fileid',
+            JSON.stringify({
+              fileId: user.profile,
+            }),
+          ),
+        );
+        return {
+          ...user,
+          profile: file,
+        };
+      }
+      return user;
+    } catch (e) {
+      throw e;
     }
   }
 
   public async login(data: LoginDto) {
     try {
       const { email, password } = data;
-      const checkUser = await this.prisma.user.findUnique({ where: { email } });
-      if (!checkUser) {
-        throw new HttpException(
-          'user_not_found',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      const user = await this.prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
-      if (compareHash(password, checkUser.password)) {
-        throw new HttpException('invalid_password', HttpStatus.CONFLICT);
+      if (!compareSync(password, user.password)) {
+        throw new HttpException('invalid_password', HttpStatus.UNAUTHORIZED);
       }
-      const createTokenResponse = await this.tokenService.generateToken({
-        userId: checkUser.id,
-        role: checkUser.role,
+      const accessToken = await this.tokenService.generateToken({
+        userId: user.id,
+        role: user.role,
       });
-      delete checkUser.password;
+      delete user.password;
+      if (user.profile) {
+        const file = await firstValueFrom(
+          this.fileClient.send(
+            'get_file_by_fileid',
+            JSON.stringify({
+              fileId: user.profile,
+            }),
+          ),
+        );
+        return {
+          accessToken,
+          user: {
+            ...user,
+            profile: file,
+          },
+        };
+      }
       return {
-        accessToken: createTokenResponse,
-        user: checkUser,
+        accessToken,
+        user,
       };
     } catch (e) {
-      throw new InternalServerErrorException(e);
+      throw e;
     }
   }
 
   public async signup(data: CreateUserDto) {
     try {
-      const { email, password, firstname, lastname } = data;
+      const { email, password, firstName, lastName, deviceToken } = data;
       const checkUser = await this.prisma.user.findUnique({ where: { email } });
       if (checkUser) {
         throw new HttpException('user_exists', HttpStatus.CONFLICT);
       }
-      const hashPassword = createHash(password);
+      const hashPassword = hashSync(password, 10);
       const newUser = {} as User;
       newUser.email = data.email;
       newUser.password = hashPassword;
-      newUser.first_name = firstname.trim();
-      newUser.last_name = lastname.trim();
+      newUser.first_name = firstName?.trim();
+      newUser.last_name = lastName?.trim();
+      newUser.device_token = deviceToken?.trim();
       newUser.role = Role.USER;
       const user = await this.prisma.user.create({ data: newUser });
-      const createTokenResponse = await this.tokenService.generateToken({
+      const accessToken = await this.tokenService.generateToken({
         userId: user.id,
         role: user.role,
       });
       delete user.password;
+      if (user.profile) {
+        const file = await firstValueFrom(
+          this.fileClient.send(
+            'get_file_by_fileid',
+            JSON.stringify({
+              fileId: user.profile,
+            }),
+          ),
+        );
+        return {
+          accessToken,
+          user: {
+            ...user,
+            profile: file,
+          },
+        };
+      }
       return {
-        accessToken: createTokenResponse,
+        accessToken,
         user,
       };
     } catch (e) {
-      throw new InternalServerErrorException(e);
+      throw e;
     }
   }
 }

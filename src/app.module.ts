@@ -1,19 +1,32 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_GUARD } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { PrismaService, TokenService } from './core/services';
+import { TerminusModule } from '@nestjs/terminus';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import { ConfigService } from './core/services';
+import { AppService } from './app.service';
+import { AppController } from './app.controller';
+import { PrismaService, TokenService } from './services';
+import { ConfigService } from './config/config.service';
 import { HealthController } from './health.controller';
 import { ConfigModule } from './config/config.module';
-import { TerminusModule } from '@nestjs/terminus';
-import { join } from 'path';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './core/guards';
+import { JwtAuthGuard, RolesGuard } from './guards';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      ...(process.env.NODE_ENV === 'development' && {
+        pinoHttp: {
+          transport: {
+            target: 'pino-pretty',
+            options: {
+              singleLine: true,
+            },
+          },
+        },
+      }),
+    }),
     ConfigModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -43,6 +56,23 @@ import { JwtAuthGuard } from './core/guards';
         inject: [ConfigService],
       },
     ]),
+    ClientsModule.registerAsync([
+      {
+        name: 'FILES_SERVICE',
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [`${configService.get('rb_url')}`],
+            queue: `${configService.get('files_queue')}`,
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+        inject: [ConfigService],
+      },
+    ]),
     TerminusModule,
   ],
   controllers: [AppController, HealthController],
@@ -53,6 +83,10 @@ import { JwtAuthGuard } from './core/guards';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })

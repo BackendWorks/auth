@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "TokenStatus" AS ENUM ('ISSUED', 'EXPIRED');
-
--- CreateEnum
 CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
 -- CreateTable
@@ -11,11 +8,13 @@ CREATE TABLE "User" (
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "phone" TEXT,
     "role" "Role" NOT NULL DEFAULT 'USER',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+    "is_deleted" BOOLEAN,
     "profile" TEXT,
-    "phone" TEXT,
     "device_token" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -25,11 +24,9 @@ CREATE TABLE "User" (
 CREATE TABLE "Token" (
     "id" SERIAL NOT NULL,
     "token" TEXT NOT NULL,
-    "status" "TokenStatus" NOT NULL DEFAULT 'ISSUED',
+    "expire" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "expired_at" TIMESTAMP(3),
-    "user_id" INTEGER NOT NULL,
+    "user_id" INTEGER,
 
     CONSTRAINT "Token_pkey" PRIMARY KEY ("id")
 );
@@ -44,4 +41,4 @@ CREATE UNIQUE INDEX "User_device_token_key" ON "User"("device_token");
 CREATE UNIQUE INDEX "Token_token_key" ON "Token"("token");
 
 -- AddForeignKey
-ALTER TABLE "Token" ADD CONSTRAINT "Token_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Token" ADD CONSTRAINT "Token_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,34 +11,29 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   first_name   String
   last_name    String
   password     String
-  role         Role     @default(USER)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  profile      String?
   phone        String?
-  device_token String?  @unique
+  role         Role      @default(USER)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+  is_deleted   Boolean?
+  profile      String?
+  device_token String?   @unique
   tokens       Token[]
 }
 
 model Token {
-  id         Int         @id @default(autoincrement())
-  token      String      @unique
-  status     TokenStatus @default(ISSUED)
-  created_at DateTime    @default(now())
-  updated_at DateTime    @updatedAt
-  expired_at DateTime?
-  user       User        @relation(fields: [user_id], references: [id])
-  user_id    Int
-}
-
-enum TokenStatus {
-  ISSUED
-  EXPIRED
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  expire     DateTime
+  created_at DateTime @default(now())
+  user       User?    @relation(fields: [user_id], references: [id])
+  user_id    Int?
 }
 
 enum Role {

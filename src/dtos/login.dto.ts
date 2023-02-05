@@ -4,11 +4,11 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class LoginDto {
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'email not provided' })
+  @IsNotEmpty({ message: 'email is required' })
   public email: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: 'password not provided' })
+  @IsNotEmpty({ message: 'password is required' })
   public password: string;
 }
