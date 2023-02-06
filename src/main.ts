@@ -24,11 +24,13 @@ async function bootstrap() {
     AppModule,
     new ExpressAdapter(express()),
     {
+      logger: false,
       bufferLogs: true,
       cors: true,
     },
   );
-  app.useLogger(app.get(Logger));
+  const logger = app.get(Logger);
+  app.useLogger(logger);
   app.use(helmet());
   const configService = app.get(ConfigService);
   const moduleRef = app.select(AppModule);
@@ -58,5 +60,6 @@ async function bootstrap() {
   });
   await app.startAllMicroservices();
   await app.listen(configService.get('servicePort'));
+  logger.log('🚀 User service started successfully');
 }
 bootstrap();

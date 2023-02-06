@@ -45,7 +45,7 @@ export class AppController {
     return this.appService.changePassword(data);
   }
 
-  @Put('/update')
+  @Put('/user/update')
   updateProfile(
     @Body() data: UpdateProfileDto,
     @CurrentUser() userId: number,
