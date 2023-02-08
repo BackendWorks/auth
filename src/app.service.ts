@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { compareSync, hashSync } from 'bcrypt';
 import { User, Role } from '@prisma/client';
@@ -17,14 +23,18 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AppService {
+  private readonly logger = new Logger(AppService.name);
   constructor(
     @Inject('MAIL_SERVICE') private readonly mailClient: ClientProxy,
     @Inject('FILES_SERVICE') private readonly fileClient: ClientProxy,
+    @Inject('NOTIFICATION_SERVICE')
+    private readonly notificationClient: ClientProxy,
     private prisma: PrismaService,
     private tokenService: TokenService,
   ) {
     this.mailClient.connect();
     this.fileClient.connect();
+    this.notificationClient.connect();
   }
 
   public getUserById(userId: number) {
@@ -43,6 +53,7 @@ export class AppService {
         throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
       const token = nanoid(10);
+      this.logger.log({ token });
       await this.prisma.token.create({
         data: {
           expire: new Date(new Date().getTime() + 60000),
@@ -194,6 +205,15 @@ export class AppService {
         userId: user.id,
         role: user.role,
       });
+      this.notificationClient.emit(
+        'send_notification',
+        JSON.stringify({
+          content: 'Welcome to microservices world!',
+          type: 'WELCOME_NOTIFICATION',
+          payload: {},
+          userId: user.id,
+        }),
+      );
       delete user.password;
       if (user.profile) {
         const file = await firstValueFrom(

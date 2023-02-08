@@ -60,6 +60,6 @@ async function bootstrap() {
   });
   await app.startAllMicroservices();
   await app.listen(configService.get('servicePort'));
-  logger.log('🚀 User service started successfully');
+  logger.log('🚀 Auth service started successfully');
 }
 bootstrap();

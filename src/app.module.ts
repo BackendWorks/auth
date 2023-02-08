@@ -73,6 +73,23 @@ import { LoggerModule } from 'nestjs-pino';
         inject: [ConfigService],
       },
     ]),
+    ClientsModule.registerAsync([
+      {
+        name: 'NOTIFICATION_SERVICE',
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [`${configService.get('rb_url')}`],
+            queue: `${configService.get('notification_queue')}`,
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+        inject: [ConfigService],
+      },
+    ]),
     TerminusModule,
   ],
   controllers: [AppController, HealthController],
