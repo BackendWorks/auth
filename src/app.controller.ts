@@ -1,6 +1,6 @@
-import { Body, Controller, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import { AppService } from './app.service';
 import {
   CreateUserDto,
@@ -9,27 +9,40 @@ import {
   UpdateProfileDto,
   ChangePasswordDto,
 } from './dtos';
-import { IAuthPayload } from './types';
-import { Public, CurrentUser } from './decorators';
-import { TokenService } from './services';
+import { IAuthPayload, IAuthResponse } from './types';
+import { Public, CurrentUser, Roles } from './decorators';
+import { PrismaService } from './services';
 import { JwtPayload } from 'jsonwebtoken';
+import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
+import { JwtStrategy } from './jwt.strategy';
 
 @Controller()
 export class AppController {
   constructor(
     private appService: AppService,
-    private tokenService: TokenService,
+    private healthCheckService: HealthCheckService,
+    private prismaService: PrismaService,
+    private readonly jwt: JwtStrategy,
   ) {}
+
+  @Get('/health')
+  @HealthCheck()
+  @Public()
+  public async getHealth() {
+    return this.healthCheckService.check([
+      () => this.prismaService.$queryRaw`SELECT 1`,
+    ]);
+  }
 
   @Public()
   @Post('/login')
-  login(@Body() data: LoginDto): Promise<IAuthPayload> {
+  login(@Body() data: LoginDto): Promise<IAuthResponse> {
     return this.appService.login(data);
   }
 
   @Public()
   @Post('/signup')
-  signup(@Body() data: CreateUserDto): Promise<IAuthPayload> {
+  signup(@Body() data: CreateUserDto): Promise<IAuthResponse> {
     return this.appService.signup(data);
   }
 
@@ -45,12 +58,20 @@ export class AppController {
     return this.appService.changePassword(data);
   }
 
+  @Get('/user')
+  async getUserDetails(@CurrentUser() user: IAuthPayload) {
+    const get = await this.appService.getUserById(user.userId);
+    delete get.password;
+    return get;
+  }
+
+  @Roles(Role.ADMIN)
   @Put('/user/update')
   updateProfile(
     @Body() data: UpdateProfileDto,
-    @CurrentUser() userId: number,
+    @CurrentUser() user: IAuthPayload,
   ): Promise<User> {
-    return this.appService.updateProfile(data, userId);
+    return this.appService.updateProfile(data, user.userId);
   }
 
   @MessagePattern('get_user_by_userid')
@@ -64,6 +85,6 @@ export class AppController {
     @Payload() data: string,
   ): Promise<User | JwtPayload | string> {
     const payload = JSON.parse(data);
-    return this.tokenService.validateToken(payload.token);
+    return this.jwt.validateToken(payload.token);
   }
 }

@@ -1,19 +1,13 @@
-import {
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { IS_PUBLIC_KEY } from '../decorators';
-import { TokenService } from '../services';
+import { AuthGuard } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
-export class JwtAuthGuard {
-  constructor(
-    private reflector: Reflector,
-    private tokenService: TokenService,
-  ) {}
-
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private reflector: Reflector) {
+    super();
+  }
   canActivate(context: ExecutionContext) {
     const isRpc = context.getType() === 'rpc';
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -23,17 +17,6 @@ export class JwtAuthGuard {
     if (isPublic || isRpc) {
       return true;
     }
-    const request = context.switchToHttp().getRequest();
-    let token = request.headers['authorization'];
-    if (!token) {
-      throw new UnauthorizedException();
-    }
-    token = token.replace('Bearer ', '');
-    const user = this.tokenService.validateToken(token);
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-    request.userId = user['userId'];
-    return true;
+    return super.canActivate(context);
   }
 }

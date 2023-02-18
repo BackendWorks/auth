@@ -16,10 +16,11 @@ import {
   UpdateProfileDto,
 } from './dtos';
 import { IMailPayload } from './types';
-import { TokenService, PrismaService } from './services';
+import { PrismaService } from './services';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
+import { JwtStrategy } from './jwt.strategy';
 
 @Injectable()
 export class AppService {
@@ -30,14 +31,14 @@ export class AppService {
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationClient: ClientProxy,
     private prisma: PrismaService,
-    private tokenService: TokenService,
+    private readonly jwt: JwtStrategy,
   ) {
     this.mailClient.connect();
     this.fileClient.connect();
     this.notificationClient.connect();
   }
 
-  public getUserById(userId: number) {
+  public getUserById(userId: number): Promise<User> {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }
 
@@ -154,7 +155,7 @@ export class AppService {
       if (!compareSync(password, user.password)) {
         throw new HttpException('invalid_password', HttpStatus.UNAUTHORIZED);
       }
-      const accessToken = await this.tokenService.generateToken({
+      const accessToken = await this.jwt.generateToken({
         userId: user.id,
         role: user.role,
       });
@@ -201,7 +202,7 @@ export class AppService {
       newUser.device_token = deviceToken?.trim();
       newUser.role = Role.USER;
       const user = await this.prisma.user.create({ data: newUser });
-      const accessToken = await this.tokenService.generateToken({
+      const accessToken = await this.jwt.generateToken({
         userId: user.id,
         role: user.role,
       });

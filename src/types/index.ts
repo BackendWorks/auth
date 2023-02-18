@@ -23,9 +23,14 @@ export interface IResponse<T> {
   data: T[];
 }
 
-export interface IAuthPayload {
+export interface IAuthResponse {
   accessToken: string;
   user: User;
+}
+
+export interface IAuthPayload {
+  userId: number;
+  role: string;
 }
 
 enum EmailTemplates {
