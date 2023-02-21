@@ -43,7 +43,7 @@
     "nanoid": "^3.1.25",
     "nestjs-i18n": "^10.2.6",
     "nestjs-pino": "^3.1.2",
-    "passport": "^0.5.2",
+    "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.7.1",
     "pino-http": "^8.3.2",
