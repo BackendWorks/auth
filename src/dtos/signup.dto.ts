@@ -25,5 +25,5 @@ export class CreateUserDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
-  public deviceToken: string;
+  public deviceToken?: string;
 }

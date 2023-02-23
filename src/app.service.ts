@@ -54,7 +54,6 @@ export class AppService {
         throw new HttpException('user_not_found', HttpStatus.NOT_FOUND);
       }
       const token = nanoid(10);
-      this.logger.log({ token });
       await this.prisma.token.create({
         data: {
           expire: new Date(new Date().getTime() + 60000),

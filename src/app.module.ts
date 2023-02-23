@@ -10,25 +10,12 @@ import { PrismaService } from './services';
 import { ConfigService } from './config/config.service';
 import { ConfigModule } from './config/config.module';
 import { JwtAuthGuard, RolesGuard } from './guards';
-import { LoggerModule } from 'nestjs-pino';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
-    LoggerModule.forRoot({
-      ...(process.env.NODE_ENV === 'development' && {
-        pinoHttp: {
-          transport: {
-            target: 'pino-pretty',
-            options: {
-              singleLine: true,
-            },
-          },
-        },
-      }),
-    }),
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

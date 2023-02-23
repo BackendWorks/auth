@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="3" failures="2" errors="0" time="3.253">
+  <testsuite name="AppService" errors="0" failures="2" skipped="0" timestamp="2023-02-23T08:57:36" time="3.195" tests="3">
+    <testcase classname="AppService should be defined" name="AppService should be defined" time="0.008">
+    </testcase>
+    <testcase classname="AppService should create user" name="AppService should create user" time="0.002">
+      <failure>TypeError: Cannot read property &apos;findUnique&apos; of undefined
+    at AppService.signup (/home/harsh-simform/nestjs-microservices/auth/src/app.service.ts:192:48)
+    at Object.&lt;anonymous&gt; (/home/harsh-simform/nestjs-microservices/auth/src/app.service.spec.ts:60:36)
+    at Promise.then.completed (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/utils.js:333:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/utils.js:259:10)
+    at _callCircusTest (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:277:40)
+    at processTicksAndRejections (internal/process/task_queues.js:95:5)
+    at _runTest (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:209:3)
+    at _runTestsForDescribeBlock (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:97:9)
+    at _runTestsForDescribeBlock (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:91:9)</failure>
+    </testcase>
+    <testcase classname="AppService should get access token while login" name="AppService should get access token while login" time="0.003">
+      <failure>TypeError: Cannot read property &apos;findUnique&apos; of undefined
+    at AppService.login (/home/harsh-simform/nestjs-microservices/auth/src/app.service.ts:151:43)
+    at Object.&lt;anonymous&gt; (/home/harsh-simform/nestjs-microservices/auth/src/app.service.spec.ts:66:36)
+    at Promise.then.completed (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/utils.js:333:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/utils.js:259:10)
+    at _callCircusTest (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:277:40)
+    at processTicksAndRejections (internal/process/task_queues.js:95:5)
+    at _runTest (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:209:3)
+    at _runTestsForDescribeBlock (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:97:9)
+    at _runTestsForDescribeBlock (/home/harsh-simform/nestjs-microservices/auth/node_modules/jest-circus/build/run.js:91:9)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
