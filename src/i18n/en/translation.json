@@ -1,11 +1,3 @@
 {
-  "invalid_password": "password is invalid.",
-  "invalid_email": "email is invalid.",
-  "invalid_access": "invalid access.",
-  "invalid_token": "invalid token.",
-  "user_not_found": "user not found.",
-  "user_exists": "user already exists.",
-  "forgot_token_not_found": "token not found.",
-  "forgot_token_expired": "token is expired.",
-  "password_changed": "password changed."
+  "user_exists": "An account with the given email already exists."
 }

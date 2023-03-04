@@ -6,27 +6,16 @@ import { TerminusModule } from '@nestjs/terminus';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
-import { PrismaService } from './services';
+import { AuthService, JwtService, PrismaService } from './services';
 import { ConfigService } from './config/config.service';
 import { ConfigModule } from './config/config.module';
 import { JwtAuthGuard, RolesGuard } from './guards';
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
     ConfigModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('authSecret'),
-        signOptions: {
-          expiresIn: configService.get('tokenExp'),
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -89,14 +78,14 @@ import { JwtStrategy } from './jwt.strategy';
         inject: [ConfigService],
       },
     ]),
-    PassportModule,
     TerminusModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    AuthService,
+    JwtService,
     PrismaService,
-    JwtStrategy,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

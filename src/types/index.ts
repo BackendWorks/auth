@@ -25,7 +25,8 @@ export interface IResponse<T> {
 
 export interface IAuthResponse {
   accessToken: string;
-  user: User;
+  refreshToken: string;
+  // user: User;
 }
 
 export interface IAuthPayload {

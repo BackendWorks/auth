@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { I18nContext } from 'nestjs-i18n';
+import * as messages from '../i18n/en/translation.json';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -21,7 +22,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (typeof exception.getResponse() === 'object') {
       response.status(statusCode).send(exception.getResponse());
     } else {
-      const message = await i18n.t(`translation.${exception.message}`);
+      let message: string;
+      if (Object.keys(messages).some((key) => key !== exception.message)) {
+        message = exception.message;
+      } else {
+        message = await i18n.t(`translation.${exception.message}`);
+      }
       response.status(statusCode).json({
         statusCode,
         message,

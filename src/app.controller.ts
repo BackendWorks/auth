@@ -1,20 +1,12 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { Role, User } from '@prisma/client';
 import { AppService } from './app.service';
-import {
-  CreateUserDto,
-  ForgotPasswordDto,
-  LoginDto,
-  UpdateProfileDto,
-  ChangePasswordDto,
-} from './dtos';
-import { IAuthPayload, IAuthResponse } from './types';
-import { Public, CurrentUser, Roles } from './decorators';
-import { PrismaService } from './services';
-import { JwtPayload } from 'jsonwebtoken';
+import { CreateUserDto, LoginDto } from './dtos';
+import { CurrentUser, Public } from './decorators';
+import { JwtService, PrismaService } from './services';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
-import { JwtStrategy } from './jwt.strategy';
+import { GetOtpDto, VerifyDto } from './dtos/verify.dto';
+import { User } from '@prisma/client';
 
 @Controller()
 export class AppController {
@@ -22,7 +14,7 @@ export class AppController {
     private appService: AppService,
     private healthCheckService: HealthCheckService,
     private prismaService: PrismaService,
-    private readonly jwt: JwtStrategy,
+    private jwt: JwtService,
   ) {}
 
   @Get('/health')
@@ -30,61 +22,49 @@ export class AppController {
   @Public()
   public async getHealth() {
     return this.healthCheckService.check([
-      () => this.prismaService.$queryRaw`SELECT 1`,
+      () => this.prismaService.isHealthy(),
     ]);
   }
 
   @Public()
   @Post('/login')
-  login(@Body() data: LoginDto): Promise<IAuthResponse> {
+  login(@Body() data: LoginDto) {
     return this.appService.login(data);
   }
 
   @Public()
   @Post('/signup')
-  signup(@Body() data: CreateUserDto): Promise<IAuthResponse> {
+  signup(@Body() data: CreateUserDto) {
     return this.appService.signup(data);
   }
 
   @Public()
-  @Post('/forgot-password')
-  forgotPassword(@Body() data: ForgotPasswordDto): Promise<void> {
-    return this.appService.sendForgotPasswordEmail(data);
+  @Post('/verify')
+  @HttpCode(200)
+  verifyUser(@Body() data: VerifyDto) {
+    return this.appService.verifySignup(data);
   }
 
   @Public()
-  @Post('/change-password')
-  changePassword(@Body() data: ChangePasswordDto): Promise<void> {
-    return this.appService.changePassword(data);
+  @Post('/otp')
+  @HttpCode(201)
+  getOtp(@Body() data: GetOtpDto) {
+    return this.appService.getOtp(data);
   }
 
-  @Get('/user')
-  async getUserDetails(@CurrentUser() user: IAuthPayload) {
-    const get = await this.appService.getUserById(user.userId);
-    delete get.password;
-    return get;
+  @Get('/me')
+  me(@CurrentUser() user: User) {
+    return this.appService.me(user.email);
   }
 
-  @Roles(Role.ADMIN)
-  @Put('/user/update')
-  updateProfile(
-    @Body() data: UpdateProfileDto,
-    @CurrentUser() user: IAuthPayload,
-  ): Promise<User> {
-    return this.appService.updateProfile(data, user.userId);
-  }
-
-  @MessagePattern('get_user_by_userid')
+  @MessagePattern('get_user_by_id')
   public async getUserById(@Payload() data: string): Promise<User> {
     const payload = JSON.parse(data);
-    return this.appService.getUserById(payload.userId);
+    return this.appService.getUserById(payload.id);
   }
 
   @MessagePattern('validate_token')
-  public async getUserByToken(
-    @Payload() data: string,
-  ): Promise<User | JwtPayload | string> {
-    const payload = JSON.parse(data);
-    return this.jwt.validateToken(payload.token);
+  public async getUserByAccessToken(@Payload() token: string) {
+    return this.jwt.validateToken(token);
   }
 }

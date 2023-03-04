@@ -9,9 +9,10 @@ interface Config {
   auth_queue: string;
   mailer_queue: string;
   files_queue: string;
-  authSecret: string;
-  tokenExp: string;
   notification_queue: string;
+  cognitoUserPoolId: string;
+  cognitoClientId: string;
+  authority: string;
 }
 
 @Injectable()
@@ -22,11 +23,10 @@ export class ConfigService {
     this.config.servicePort = process.env.PORT;
     this.config.rb_url = process.env.RABBITMQ_URL;
     this.config.auth_queue = process.env.RABBITMQ_AUTH_QUEUE;
-    this.config.mailer_queue = process.env.RABBITMQ_MAILER_QUEUE;
-    this.config.notification_queue = process.env.RABBITMQ_NOTIFICATION_QUEUE;
     this.config.files_queue = process.env.RABBITMQ_FILES_QUEUE;
-    this.config.tokenExp = process.env.TOKEN_EXP;
-    this.config.authSecret = process.env.AUTH_SECRET;
+    this.config.cognitoClientId = process.env.AWS_COGNITO_CLIENT_ID;
+    this.config.cognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
+    this.config.authority = process.env.AWS_COGNITO_AUTHORITY;
   }
 
   public get(key: keyof Config): any {
