@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
-    "@nestjs/cli": "^9.0.0",
+    "@nestjs/cli": "^9.5.0",
     "@nestjs/schematics": "^9.0.0",
     "@nestjs/testing": "^9.0.0",
     "@types/amqplib": "^0.8.2",
