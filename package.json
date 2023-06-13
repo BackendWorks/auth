@@ -23,7 +23,7 @@
     "pre-commit": "lint-staged"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.281.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.350.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/microservices": "^8.0.6",
