@@ -19,4 +19,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 9001
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "npm", "start" ]

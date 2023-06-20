@@ -11,13 +11,14 @@ import { AuthService } from './services/auth.service';
 import { CreateUserDto, LoginDto } from './dtos';
 import { GetOtpDto, VerifyDto } from './dtos/verify.dto';
 import { Prisma } from '@prisma/client';
+// import { FirebaseService } from './services/firebase.service';
 
 @Injectable()
 export class AppService {
   constructor(
     @Inject('FILES_SERVICE') private readonly fileClient: ClientProxy,
     private prisma: PrismaService,
-    private authService: AuthService,
+    private authService: AuthService, // private firebaseService: FirebaseService,
   ) {
     this.fileClient.connect();
   }

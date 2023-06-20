@@ -11,6 +11,7 @@ import { ConfigService } from './config/config.service';
 import { ConfigModule } from './config/config.module';
 import { JwtAuthGuard, RolesGuard } from './guards';
 import { PassportModule } from '@nestjs/passport';
+import { FirebaseService } from './services/firebase.service';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { PassportModule } from '@nestjs/passport';
     AuthService,
     JwtService,
     PrismaService,
+    FirebaseService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
