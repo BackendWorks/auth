@@ -18,9 +18,9 @@ export class FirebaseService {
     //   authProviderX509CertUrl: firebaseConfig.auth_provider_x509_cert_url,
     //   clientC509CertUrl: firebaseConfig.client_x509_cert_url,
     // };
-    this.firebaseAdmin = firebase.initializeApp({
-      credential: firebase.credential.cert(params),
-    });
+    // this.firebaseAdmin = firebase.initializeApp({
+    //   credential: firebase.credential.cert(params),
+    // });
   }
 
   signUp(data: {
