@@ -6,19 +6,16 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { PrismaService } from './services';
-import { AuthService } from './services/auth.service';
-import { CreateUserDto, LoginDto } from './dtos';
-import { GetOtpDto, VerifyDto } from './dtos/verify.dto';
 import { Prisma } from '@prisma/client';
-// import { FirebaseService } from './services/firebase.service';
+import { CognitoService, PrismaService } from '../../services';
+import { VerifyDto, GetOtpDto, LoginDto, CreateUserDto } from '../../core';
 
 @Injectable()
-export class AppService {
+export class AuthService {
   constructor(
     @Inject('FILES_SERVICE') private readonly fileClient: ClientProxy,
     private prisma: PrismaService,
-    private authService: AuthService, // private firebaseService: FirebaseService,
+    private cognitoService: CognitoService,
   ) {
     this.fileClient.connect();
   }
@@ -26,7 +23,7 @@ export class AppService {
   public async verifySignup(data: VerifyDto) {
     try {
       const { email, otp } = data;
-      const response = await this.authService.verify(email, otp);
+      const response = await this.cognitoService.verify(email, otp);
       await this.prisma.user.update({
         where: { email },
         data: {
@@ -42,7 +39,7 @@ export class AppService {
   public async getOtp(data: GetOtpDto) {
     try {
       const { email } = data;
-      await this.authService.sendOtpRequest(email);
+      await this.cognitoService.sendOtpRequest(email);
     } catch (e) {
       throw new BadRequestException(e.message);
     }
@@ -51,7 +48,7 @@ export class AppService {
   public async login(data: LoginDto) {
     try {
       const { email, password } = data;
-      const authResponse = await this.authService.authenticateUser({
+      const authResponse = await this.cognitoService.authenticateUser({
         email,
         password,
       });
@@ -68,7 +65,7 @@ export class AppService {
   public async signup(data: CreateUserDto) {
     try {
       const { email, password, firstName, lastName, deviceToken } = data;
-      const response = await this.authService.registerUser({
+      const response = await this.cognitoService.registerUser({
         email,
         password,
       });

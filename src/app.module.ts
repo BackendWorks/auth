@@ -1,21 +1,18 @@
-import { join } from 'path';
 import { Module } from '@nestjs/common';
+import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TerminusModule } from '@nestjs/terminus';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import { AppService } from './app.service';
-import { AppController } from './app.controller';
-import { AuthService, JwtService, PrismaService } from './services';
-import { ConfigService } from './config/config.service';
-import { ConfigModule } from './config/config.module';
-import { JwtAuthGuard, RolesGuard } from './guards';
+import { JwtService, PrismaService } from './services';
+import { JwtAuthGuard, RolesGuard } from './core';
 import { PassportModule } from '@nestjs/passport';
-import { FirebaseService } from './services/firebase.service';
+import { AppController } from './app.controller';
+import { AuthModule } from './modules/v1/auth.module';
+import { ConfigService } from 'src/config/config.service';
 
 @Module({
   imports: [
-    ConfigModule,
+    AuthModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -28,66 +25,13 @@ import { FirebaseService } from './services/firebase.service';
         AcceptLanguageResolver,
       ],
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'MAIL_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get('rb_url')}`],
-            queue: `${configService.get('mailer_queue')}`,
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
-    ClientsModule.registerAsync([
-      {
-        name: 'FILES_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get('rb_url')}`],
-            queue: `${configService.get('files_queue')}`,
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
-    ClientsModule.registerAsync([
-      {
-        name: 'NOTIFICATION_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`${configService.get('rb_url')}`],
-            queue: `${configService.get('notification_queue')}`,
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
     TerminusModule,
   ],
   controllers: [AppController],
   providers: [
-    AppService,
-    AuthService,
     JwtService,
+    ConfigService,
     PrismaService,
-    FirebaseService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

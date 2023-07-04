@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '../config/config.service';
 
 @Injectable()
-export class AuthService {
+export class CognitoService {
   private userPool: CognitoUserPool;
 
   constructor(private readonly configService: ConfigService) {
