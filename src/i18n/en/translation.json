@@ -1,3 +1,4 @@
 {
-  "user_exists": "An account with email is already exists."
+  "userExists": "An account with email is already exists.",
+  "accessTokenUnauthorized": "Token is unauthorized"
 }
