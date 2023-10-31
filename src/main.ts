@@ -1,26 +1,12 @@
-import {
-  ClassSerializerInterceptor,
-  Logger,
-  ValidationPipe,
-} from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { Transport } from '@nestjs/microservices';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter, ResponseInterceptor } from './core';
-import { ConfigService } from './config/config.service';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import * as express from 'express';
+import { AppModule } from './app/app.module';
+import { setupSwagger } from './swagger';
+import express from 'express';
 import helmet from 'helmet';
-
-function configureSwagger(app): void {
-  const config = new DocumentBuilder()
-    .setTitle('auth-service')
-    .setVersion('1.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/api/docs', app, document);
-}
 
 async function bootstrap() {
   const logger = new Logger();
@@ -28,43 +14,42 @@ async function bootstrap() {
     AppModule,
     new ExpressAdapter(express()),
     {
-      bufferLogs: true,
       cors: true,
     },
   );
-  app.setGlobalPrefix('/api');
-  app.use(helmet());
   const configService = app.get(ConfigService);
-  const moduleRef = app.select(AppModule);
-  const reflector = moduleRef.get(Reflector);
-  app.useGlobalInterceptors(
-    new ResponseInterceptor(reflector),
-    new ClassSerializerInterceptor(reflector),
+  const port: number = configService.get<number>('app.http.port');
+  const host: string = configService.get<string>('app.http.host');
+  const globalPrefix: string = configService.get<string>('app.globalPrefix');
+  const versioningPrefix: string = configService.get<string>(
+    'app.versioning.prefix',
   );
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
+  const version: string = configService.get<string>('app.versioning.version');
+  const versionEnable: string = configService.get<string>(
+    'app.versioning.enable',
   );
-  configureSwagger(app);
+  app.use(helmet());
+  app.useGlobalPipes(new ValidationPipe());
+  app.setGlobalPrefix(globalPrefix);
+  if (versionEnable) {
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: version,
+      prefix: versioningPrefix,
+    });
+  }
+  setupSwagger(app);
   app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
-      urls: [`${configService.get('rb_url')}`],
-      queue: `${configService.get('auth_queue')}`,
+      urls: [`${configService.get('rmq.uri')}`],
+      queue: `${configService.get('rmq.auth')}`,
       queueOptions: { durable: false },
       prefetchCount: 1,
     },
   });
   await app.startAllMicroservices();
-  await app.listen(configService.get('servicePort'));
-  logger.log(
-    `🚀 Auth service started successfully on port ${configService.get(
-      'servicePort',
-    )}`,
-  );
+  await app.listen(port, host);
+  logger.log(`🚀 Auth service started successfully on port ${port}`);
 }
 bootstrap();

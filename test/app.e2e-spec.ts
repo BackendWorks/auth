@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
+import { AppModule } from '../src/app/app.module';
 import { faker } from '@faker-js/faker';
-import { PrismaService } from '../src/services';
+import { PrismaService } from '../src/common/services';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;

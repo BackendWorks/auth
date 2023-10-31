@@ -1,31 +1,31 @@
 {
-  "name": "auth",
-  "version": "0.0.1",
+  "name": "@backendworks/auth",
+  "version": "1.0.0",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
-    "postinstall": "npm run gen",
+    "postinstall": "npm run generate && npx typesync",
     "build": "nest build",
     "dev": "dotenv -e .env.local -- nest start --watch",
     "debug": "nest start --debug --watch",
-    "gen": "prisma generate",
+    "generate": "prisma generate",
     "start": "node dist/main",
-    "db:migrate": "dotenv -e .env.local -- prisma migrate dev --preview-feature",
-    "db:migrate:prod": "prisma migrate deploy --preview-feature",
+    "migrate": "dotenv -e .env.local -- prisma migrate dev",
+    "migrate:prod": "prisma migrate deploy",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json --forceExit",
-    "prepare": "husky install",
-    "pre-commit": "lint-staged"
+    "prepare": "husky install"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.281.0",
     "@nestjs/common": "^9.0.0",
+    "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^9.0.0",
+    "@nestjs/jwt": "^10.1.1",
     "@nestjs/microservices": "^8.0.6",
     "@nestjs/passport": "^9.0.3",
     "@nestjs/platform-express": "^9.0.0",
@@ -93,6 +93,22 @@
     "ts-node": "^10.8.2",
     "tsconfig-paths": "^4.0.0",
     "typescript": "^4.7.4"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "all",
+    "useTabs": false,
+    "tabWidth": 2,
+    "overrides": [
+      {
+        "files": "*.yml",
+        "options": {
+          "tadWidth": 2,
+          "printWidth": 40,
+          "singleQuote": true
+        }
+      }
+    ]
   },
   "jest": {
     "moduleFileExtensions": [
