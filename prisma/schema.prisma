@@ -11,20 +11,22 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  cognito_sub  String    @unique
-  first_name   String
-  last_name    String
-  is_verified  Boolean   @default(false)
-  phone        String?
-  role         Role      @default(USER)
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  deleted_at   DateTime?
-  is_deleted   Boolean?
-  profile      String?
-  device_token String?   @unique
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  password          String?
+  cognito_sub       String?   @unique
+  first_name        String
+  last_name         String
+  is_verified       Boolean   @default(false)
+  phone             String?
+  role              Role      @default(USER)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  deleted_at        DateTime?
+  is_deleted        Boolean?
+  profile           String?
+  two_factor_secret String?
+  device_token      String?   @unique
 }
 
 enum Role {
