@@ -37,4 +37,5 @@ lerna-debug.log*
 .env
 .env.*
 !.env.local
+junit.xml
 firebase.config.json

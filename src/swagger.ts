@@ -20,7 +20,6 @@ export const setupSwagger = async (app: INestApplication) => {
     .setTitle(docName)
     .setDescription(docDesc)
     .setVersion(docVersion)
-    .addTag("API's")
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'accessToken',

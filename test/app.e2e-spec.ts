@@ -1,19 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from '../src/app/app.module';
-import { faker } from '@faker-js/faker';
-import { PrismaService } from '../src/common/services';
+import request from 'supertest';
+import { PrismaService } from 'src/common/services/prisma.service';
+import { AppModule } from 'src/app/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
 
   const mockUser = {
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
-    email: faker.internet.email(),
-    password: faker.internet.password(),
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john@example.com',
+    password: 'password123',
   };
 
   beforeEach(async () => {
@@ -22,17 +21,18 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    prismaService = moduleFixture.get(PrismaService);
+    prismaService = moduleFixture.get<PrismaService>(PrismaService);
 
     await app.init();
   });
 
   afterAll(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
+    await app.close();
   });
 
   it('/health (GET)', () => {
-    return request(app.getHttpServer()).get('/health').expect(200);
+    return request(app.getHttpServer()).get('/health').expect(HttpStatus.OK);
   });
 
   it('/signup (POST)', () => {

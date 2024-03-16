@@ -6,21 +6,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { firstValueFrom, of } from 'rxjs';
+import { statusMessages } from 'src/app/app.constant';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
-  statusMessages: { [key: string]: string };
-  public constructor(private readonly reflector: Reflector) {
-    this.statusMessages = {
-      200: 'OK',
-      201: 'Created',
-      202: 'Accepted',
-      203: 'NonAuthoritativeInfo',
-      204: 'NoContent',
-      205: 'ResetContent',
-      206: 'PartialContent',
-    };
-  }
+  public constructor(private readonly reflector: Reflector) {}
 
   public async intercept(
     context: ExecutionContext,
@@ -31,7 +21,7 @@ export class ResponseInterceptor implements NestInterceptor {
       this.reflector.get<number>('__httpCode__', context.getHandler()) || 200;
     return of({
       statusCode: status,
-      message: this.statusMessages[status],
+      message: statusMessages[status],
       data: body,
     });
   }

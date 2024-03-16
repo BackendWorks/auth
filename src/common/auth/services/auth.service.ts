@@ -9,7 +9,7 @@ import { IAuthService } from '../interfaces/auth.service.interface';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserLoginDto } from '../dtos/login.dto';
-import { PrismaService } from 'src/common/services/prisma.service';
+import { PrismaService } from '../../../common/services/prisma.service';
 import { HelperService } from './helper.service';
 import { UserCreateDto } from '../dtos/signup.dto';
 import { Role } from '@prisma/client';
