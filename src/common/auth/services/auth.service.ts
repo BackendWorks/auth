@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserLoginDto } from '../dtos/login.dto';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { HelperService } from './helper.service';
+import { generateFromEmail } from 'unique-username-generator';
 import { UserCreateDto } from '../dtos/signup.dto';
 import { Role } from '@prisma/client';
 import { authenticator } from 'otplib';
@@ -115,6 +116,7 @@ export class AuthService implements IAuthService {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           role: Role.USER,
+          username: generateFromEmail(email),
         },
       });
       const accessToken = this.jwtService.sign(

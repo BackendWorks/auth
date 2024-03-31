@@ -12,6 +12,7 @@ import { CognitoService } from './cognito.service';
 import { GetOtpDto, VerifyDto } from '../dtos/cognito.verify.dto';
 import { LoginDto } from '../dtos/cognito.login.dto';
 import { CreateUserDto } from '../dtos/cognito.signup.dto';
+import { generateFromEmail } from 'unique-username-generator';
 
 @Injectable()
 export class CongnitoAuthService {
@@ -90,6 +91,7 @@ export class CongnitoAuthService {
           device_token: deviceToken?.trim(),
           is_verified: response.userConfirmed,
           cognito_sub: response.userSub,
+          username: generateFromEmail(email),
         },
       });
       return user;
