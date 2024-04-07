@@ -2,17 +2,53 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { HelperService } from './helper.service';
-import { UserLoginDto } from '../dtos/login.dto';
-import { UserCreateDto } from '../dtos/signup.dto';
-import { NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { UserService } from '../../../modules/user/services/user.service';
+import { HelperHashService } from './helper.hash.service';
+import { HttpException, NotFoundException } from '@nestjs/common';
+import { authenticator } from 'otplib';
+
+jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
+
+const configServiceMock = {
+  get: jest.fn((key) => {
+    switch (key) {
+      case 'auth.accessToken.secret':
+        return 'accessTokenSecret';
+      case 'auth.refreshToken.secret':
+        return 'refreshTokenSecret';
+      case 'auth.accessToken.expirationTime':
+        return '1h';
+      case 'auth.refreshToken.expirationTime':
+        return '7d';
+      default:
+        return null;
+    }
+  }),
+};
+
+const userServiceMock = {
+  getUserByEmail: jest.fn(),
+  createUser: jest.fn(),
+  updateUser: jest.fn(),
+  getUserById: jest.fn(),
+  updateUserTwoFaSecret: jest.fn(),
+};
+
+const jwtServiceMock = {
+  signAsync: jest.fn(),
+  verifyAsync: jest.fn(),
+};
+
+const helperHashServiceMock = {
+  createHash: jest.fn(),
+  match: jest.fn(),
+};
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prismaServiceMock;
-  let jwtServiceMock;
-  let helperServiceMock;
+  let userService: UserService;
+  let jwtService: JwtService;
+  let helperHashService: HelperHashService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,112 +56,206 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: ConfigService,
-          useValue: { get: jest.fn() },
+          useValue: configServiceMock,
         },
         {
           provide: JwtService,
-          useValue: { sign: jest.fn() },
+          useValue: jwtServiceMock,
         },
         {
-          provide: PrismaService,
-          useValue: {
-            user: {
-              findUnique: jest.fn(),
-              create: jest.fn(),
-              update: jest.fn(),
-            },
-          },
+          provide: UserService,
+          useValue: userServiceMock,
         },
         {
-          provide: HelperService,
-          useValue: {
-            match: jest.fn(),
-            createHash: jest.fn(),
-          },
+          provide: HelperHashService,
+          useValue: helperHashServiceMock,
         },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prismaServiceMock = module.get<PrismaService>(PrismaService);
-    jwtServiceMock = module.get<JwtService>(JwtService);
-    helperServiceMock = module.get<HelperService>(HelperService);
+    userService = module.get<UserService>(UserService);
+    jwtService = module.get<JwtService>(JwtService);
+    helperHashService = module.get<HelperHashService>(HelperHashService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+    expect(userService).toBeDefined();
+    expect(jwtService).toBeDefined();
+    expect(helperHashService).toBeDefined();
+  });
+
+  describe('verifyToken', () => {
+    it('should verify token successfully', async () => {
+      const tokenPayload = { id: 1, role: 'user', device_token: 'deviceToken' };
+      jwtServiceMock.verifyAsync.mockResolvedValue(tokenPayload);
+
+      const result = await service.verifyToken('someToken');
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith('someToken', {
+        secret: 'accessTokenSecret',
+      });
+      expect(result).toEqual(tokenPayload);
+    });
   });
 
   describe('login', () => {
-    it('should throw NotFoundException when user not found', async () => {
-      prismaServiceMock.user.findUnique.mockResolvedValue(null);
-      const data: UserLoginDto = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-      await expect(service.login(data)).rejects.toThrow(NotFoundException);
+    it('should throw NotFoundException if user not found', async () => {
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
+      await expect(
+        service.login({ email: 'test@example.com', password: 'password' }),
+      ).rejects.toThrow(new NotFoundException('userNotFound'));
     });
 
-    it('should throw NotFoundException when password is invalid', async () => {
-      prismaServiceMock.user.findUnique.mockResolvedValue({
+    it('should login successfully', async () => {
+      const user = {
         id: 1,
+        email: 'test@example.com',
         password: 'hashedPassword',
-      });
-      helperServiceMock.match.mockReturnValue(false);
-      const data: UserLoginDto = {
-        email: 'test@example.com',
-        password: 'password123',
+        device_token: 'deviceToken',
+        role: 'user',
       };
-      await expect(service.login(data)).rejects.toThrow(NotFoundException);
-    });
+      const tokens = {
+        accessToken: 'accessToken',
+        refreshToken: 'refreshToken',
+      };
+      userServiceMock.getUserByEmail.mockResolvedValue(user);
+      helperHashServiceMock.match.mockReturnValue(true);
+      jwtServiceMock.signAsync
+        .mockResolvedValueOnce(tokens.accessToken)
+        .mockResolvedValueOnce(tokens.refreshToken);
 
-    it('should return accessToken and user when login is successful', async () => {
-      const user = { id: 1, password: 'hashedPassword' };
-      prismaServiceMock.user.findUnique.mockResolvedValue(user);
-      helperServiceMock.match.mockReturnValue(true);
-      jwtServiceMock.sign.mockReturnValue('accessToken');
-      const data: UserLoginDto = {
+      const result = await service.login({
         email: 'test@example.com',
-        password: 'password123',
-      };
-      const result = await service.login(data);
-      expect(result).toEqual({ accessToken: 'accessToken', user });
+        password: 'password',
+      });
+      expect(result).toEqual(expect.objectContaining(tokens));
     });
   });
 
   describe('signup', () => {
-    it('should throw HttpException with CONFLICT status when user already exists', async () => {
-      prismaServiceMock.user.findUnique.mockResolvedValue({});
-      const data: UserCreateDto = {
+    it('should sign up a new user and return tokens', async () => {
+      const userCreateDto = {
         email: 'test@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
+        firstName: 'Test',
+        lastName: 'User',
         password: 'password123',
+        username: 'testUser',
       };
-      await expect(service.signup(data)).rejects.toThrow(
-        new HttpException('userExists', HttpStatus.CONFLICT),
-      );
+
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
+
+      helperHashServiceMock.createHash.mockReturnValue('hashedPassword');
+
+      userServiceMock.createUser.mockResolvedValue({
+        ...userCreateDto,
+        id: 1,
+        device_token: 'deviceToken',
+        roles_id: 'roleId',
+        password: 'hashedPassword',
+      });
+
+      jest.spyOn(service, 'generateTokens').mockResolvedValue({
+        accessToken: 'accessToken',
+        refreshToken: 'refreshToken',
+      });
+
+      const result = await service.signup(userCreateDto);
+
+      expect(result.user).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+      expect(userService.createUser).toHaveBeenCalledWith({
+        ...userCreateDto,
+        password: 'hashedPassword',
+      });
     });
 
-    it('should return accessToken and user when signup is successful', async () => {
-      const createdUser = {
+    it('should throw HttpException when the user already exists', async () => {
+      const userCreateDto = {
+        email: 'existing@example.com',
+        firstName: 'Existing',
+        lastName: 'User',
+        password: 'password123',
+        username: 'existingUser',
+      };
+
+      userServiceMock.getUserByEmail.mockResolvedValue({
         id: 1,
-        email: 'test@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        password: 'password123',
-      };
-      prismaServiceMock.user.findUnique.mockResolvedValue(null);
-      prismaServiceMock.user.create.mockResolvedValue(createdUser);
-      jwtServiceMock.sign.mockReturnValue('accessToken');
-      const data: UserCreateDto = {
-        email: 'test@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        password: 'password123',
-      };
-      const result = await service.signup(data);
-      expect(result).toEqual({ accessToken: 'accessToken', user: createdUser });
+        email: 'existing@example.com',
+      });
+
+      await expect(service.signup(userCreateDto)).rejects.toThrow(
+        HttpException,
+      );
+      expect(userService.getUserByEmail).toHaveBeenCalledWith(
+        userCreateDto.email,
+      );
+      jest.clearAllMocks();
+      expect(userService.createUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('enableTwoFaForUser', () => {
+    it('should enable 2FA for a user', async () => {
+      const userId = 1;
+      const token = 'generatedToken';
+      const email = 'user@example.com';
+
+      userServiceMock.updateUserTwoFaSecret.mockResolvedValue({
+        id: userId,
+        email,
+        two_factor_secret: token,
+      });
+
+      const result = await service.enableTwoFaForUser(userId);
+
+      expect(result).toEqual(expect.any(Object));
+    });
+  });
+
+  describe('verifyTwoFactorAuth', () => {
+    it('should return true for valid 2FA token', async () => {
+      const userId = 1;
+      const token = '123456';
+      const userWith2FASecret = { id: userId, two_factor_secret: 'SECRET' };
+
+      userServiceMock.getUserById.mockResolvedValue(userWith2FASecret);
+      jest.spyOn(authenticator, 'check').mockReturnValue(true);
+
+      const isValid = await service.verifyTwoFactorAuth(userId, token);
+
+      expect(userService.getUserById).toHaveBeenCalledWith(userId);
+      expect(authenticator.check).toHaveBeenCalledWith(
+        userWith2FASecret.two_factor_secret,
+        token,
+      );
+      expect(isValid).toBe(true);
+    });
+
+    it('should return false for invalid 2FA token', async () => {
+      const userId = 1;
+      const token = 'wrong_token';
+      const userWith2FASecret = { id: userId, two_factor_secret: 'SECRET' };
+
+      userServiceMock.getUserById.mockResolvedValue(userWith2FASecret);
+      jest.spyOn(authenticator, 'check').mockReturnValue(false);
+
+      const isValid = await service.verifyTwoFactorAuth(userId, token);
+
+      expect(isValid).toBe(false);
+    });
+
+    it('should return false if user does not have 2FA secret', async () => {
+      const userId = 1;
+      const token = '123456';
+      const userWithout2FASecret = { id: userId, two_factor_secret: null };
+
+      userServiceMock.getUserById.mockResolvedValue(userWithout2FASecret);
+
+      const isValid = await service.verifyTwoFactorAuth(userId, token);
+
+      expect(isValid).toBe(false);
     });
   });
 });

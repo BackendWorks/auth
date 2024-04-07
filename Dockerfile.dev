@@ -1,14 +1,14 @@
-FROM node:16 AS builder
+FROM node:18 AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json yarn.lock ./
 COPY prisma ./prisma/
 
-RUN npm install
+RUN yarn
 
 COPY . .
 
 EXPOSE 9001
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "yarn", "dev" ]

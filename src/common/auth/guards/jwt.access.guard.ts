@@ -4,7 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from 'src/app/app.constant';
 
 @Injectable()
-export class AuthJwtAccessGuard extends AuthGuard('jwt') {
+export class AuthJwtAccessGuard extends AuthGuard('jwt-access') {
   constructor(private readonly reflector: Reflector) {
     super();
   }
@@ -20,9 +20,11 @@ export class AuthJwtAccessGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (isPublic || isRpc) {
       return;
     }
+
     if (err || !user) {
       throw new UnauthorizedException('accessTokenUnauthorized');
     }

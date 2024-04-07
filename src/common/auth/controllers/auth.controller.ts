@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthUser } from 'src/core/decorators/auth.user.decorator';
 import { Public } from 'src/core/decorators/public.decorator';
 import { AuthService } from '../services/auth.service';
-import { UserCreateDto } from '../dtos/signup.dto';
-import { UserLoginDto } from '../dtos/login.dto';
+import { UserCreateDto } from '../dtos/auth.signup.dto';
+import { UserLoginDto } from '../dtos/auth.login.dto';
+import { IAuthPayload } from '../interfaces/auth.interface';
+import { AuthJwtRefreshGuard } from '../guards/jwt.refresh.guard';
 
 @Controller({
   version: '1',
@@ -26,21 +28,23 @@ export class AuthController {
     return this.authService.signup(payload);
   }
 
-  @Get('me')
-  public me(@AuthUser() userId: number) {
-    return this.authService.me(userId);
-  }
-
   @Post('enable-2fa')
-  public enableTwoFa(@AuthUser() userId: number) {
-    this.authService.enableTwoFaForUser(userId);
+  public enableTwoFa(@AuthUser() user: IAuthPayload) {
+    return this.authService.enableTwoFaForUser(user.id);
   }
 
   @Post('verify-2fa')
   public verifyAuth(
-    @AuthUser() userId: number,
+    @AuthUser() user: IAuthPayload,
     @Body() body: { token: string },
   ) {
-    return this.authService.verifyTwoFactorAuth(userId, body.token);
+    return this.authService.verifyTwoFactorAuth(user.id, body.token);
+  }
+
+  @Public()
+  @UseGuards(AuthJwtRefreshGuard)
+  @Get('refresh-token')
+  public refreshTokens(@AuthUser() user: IAuthPayload) {
+    return this.authService.generateTokens(user);
   }
 }
