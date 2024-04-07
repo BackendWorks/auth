@@ -1,10 +1,17 @@
-import { User } from '@prisma/client';
-import { AuthResponse } from './auth.response.interface';
-import { UserLoginDto } from '../dtos/login.dto';
-import { UserCreateDto } from '../dtos/signup.dto';
+import { UserLoginDto } from '../dtos/auth.login.dto';
+import { UserCreateDto } from '../dtos/auth.signup.dto';
+import {
+  IAuthPayload,
+  IAuthResponse,
+  ITokenResponse,
+  ITwoFaResponse,
+} from './auth.interface';
 
 export interface IAuthService {
-  login(data: UserLoginDto): Promise<AuthResponse>;
-  signup(data: UserCreateDto): Promise<AuthResponse>;
-  me(id: number): Promise<User>;
+  verifyToken(accessToken: string): Promise<IAuthPayload>;
+  generateTokens(user: IAuthPayload): Promise<ITokenResponse>;
+  login(data: UserLoginDto): Promise<IAuthResponse>;
+  signup(data: UserCreateDto): Promise<IAuthResponse>;
+  enableTwoFaForUser(userId: number): Promise<ITwoFaResponse>;
+  verifyTwoFactorAuth(userId: number, token: string): Promise<boolean>;
 }

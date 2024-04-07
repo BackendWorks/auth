@@ -2,97 +2,120 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { IAuthService } from '../interfaces/auth.service.interface';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserLoginDto } from '../dtos/login.dto';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { HelperService } from './helper.service';
-import { generateFromEmail } from 'unique-username-generator';
-import { UserCreateDto } from '../dtos/signup.dto';
-import { Role } from '@prisma/client';
 import { authenticator } from 'otplib';
+import {
+  IAuthPayload,
+  IAuthResponse,
+  ITokenResponse,
+  ITwoFaResponse,
+} from '../interfaces/auth.interface';
+import { UserService } from '../../../modules/user/services/user.service';
+import { UserLoginDto } from '../dtos/auth.login.dto';
+import { UserCreateDto } from '../dtos/auth.signup.dto';
+import { HelperHashService } from './helper.hash.service';
+import { IAuthService } from '../interfaces/auth.service.interface';
+import { TokenType } from '../../../app/app.constant';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class AuthService implements IAuthService {
-  public logger: Logger;
   private readonly accessTokenSecret: string;
+  private readonly refreshTokenSecret: string;
+  private readonly accessTokenExp: string;
+  private readonly refreshTokenExp: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly prismaService: PrismaService,
-    private readonly helperService: HelperService,
+    private readonly userService: UserService,
+    private readonly helperHashService: HelperHashService,
   ) {
-    this.logger = new Logger(AuthService.name);
     this.accessTokenSecret = this.configService.get<string>(
       'auth.accessToken.secret',
     );
+    this.refreshTokenSecret = this.configService.get<string>(
+      'auth.refreshToken.secret',
+    );
+    this.accessTokenExp = this.configService.get<string>(
+      'auth.accessToken.expirationTime',
+    );
+    this.refreshTokenExp = this.configService.get<string>(
+      'auth.refreshToken.expirationTime',
+    );
   }
 
-  public generateSecret(): string {
-    return authenticator.generateSecret();
-  }
-
-  public generateTotpUri(username: string, secret: string): string {
-    return authenticator.keyuri(username, 'microservices', secret);
-  }
-
-  public verifyTotp(secret: string, token: string): boolean {
-    return authenticator.check(token, secret);
-  }
-
-  public async enableTwoFaForUser(userId: number) {
-    const secret = this.generateSecret();
-    await this.prismaService.user.update({
-      data: {
-        two_factor_secret: secret,
-      },
-      where: {
-        id: userId,
-      },
-    });
-    return { secret };
-  }
-
-  public async verifyTwoFactorAuth(userId: number, token: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-    });
-    if (user && user.two_factor_secret) {
-      const isValid = this.verifyTotp(user.two_factor_secret, token);
-      return { isValid };
-    } else {
-      return { isValid: false, message: 'User has not enabled 2FA.' };
+  public async verifyToken(accessToken: string): Promise<IAuthPayload> {
+    try {
+      const data = await this.jwtService.verifyAsync(accessToken, {
+        secret: this.accessTokenSecret,
+      });
+      return data;
+    } catch (e) {
+      throw e;
     }
   }
 
-  public async login(data: UserLoginDto) {
+  public async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
     try {
-      const { email, password } = data;
-      const user = await this.prismaService.user.findUnique({
-        where: { email },
-      });
-      if (!user) {
-        throw new NotFoundException('userNotFound');
-      }
-      const match = this.helperService.match(user.password, password);
-      if (!match) {
-        throw new NotFoundException('invalidPassword');
-      }
-      const accessToken = this.jwtService.sign(
+      const accessTokenPromise = this.jwtService.signAsync(
         {
-          user: user.id,
+          id: user.id,
+          role: user.role_id,
+          deviceToken: user.device_token,
+          tokenType: TokenType.ACCESS_TOKEN,
         },
         {
           secret: this.accessTokenSecret,
+          expiresIn: this.accessTokenExp,
         },
       );
+      const refreshTokenPromise = this.jwtService.signAsync(
+        {
+          id: user.id,
+          role: user.role_id,
+          deviceToken: user.device_token,
+          tokenType: TokenType.REFRESH_TOKEN,
+        },
+        {
+          secret: this.refreshTokenSecret,
+          expiresIn: this.refreshTokenExp,
+        },
+      );
+      const [accessToken, refreshToken] = await Promise.all([
+        accessTokenPromise,
+        refreshTokenPromise,
+      ]);
       return {
         accessToken,
+        refreshToken,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  public async login(data: UserLoginDto): Promise<IAuthResponse> {
+    try {
+      const { email, password } = data;
+      const user = await this.userService.getUserByEmail(email);
+      if (!user) {
+        throw new NotFoundException('userNotFound');
+      }
+      const match = this.helperHashService.match(user.password, password);
+      if (!match) {
+        throw new NotFoundException('invalidPassword');
+      }
+      const tokens = await this.generateTokens({
+        id: user.id,
+        device_token: user.device_token,
+        role_id: user.roles_id,
+      });
+      return {
+        ...tokens,
         user,
       };
     } catch (e) {
@@ -100,38 +123,29 @@ export class AuthService implements IAuthService {
     }
   }
 
-  public async signup(data: UserCreateDto) {
+  public async signup(data: UserCreateDto): Promise<IAuthResponse> {
     try {
-      const { email, firstName, lastName, password } = data;
-      const user = await this.prismaService.user.findUnique({
-        where: { email },
-      });
-      if (user) {
+      const { email, firstName, lastName, password, username } = data;
+      const findUser = await this.userService.getUserByEmail(email);
+      if (findUser) {
         throw new HttpException('userExists', HttpStatus.CONFLICT);
       }
-      const createdUser = await this.prismaService.user.create({
-        data: {
-          email,
-          password: this.helperService.createHash(password),
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          role: Role.USER,
-          username: generateFromEmail(email),
-        },
+      const passwordHashed = this.helperHashService.createHash(password);
+      const createdUser = await this.userService.createUser({
+        email,
+        firstName: firstName?.trim(),
+        lastName: lastName?.trim(),
+        password: passwordHashed,
+        username: username?.trim(),
       });
-      const accessToken = this.jwtService.sign(
-        {
-          id: createdUser?.id,
-          role: createdUser?.role,
-          deviceToken: createdUser?.device_token,
-        },
-        {
-          secret: this.accessTokenSecret,
-        },
-      );
+      const tokens = await this.generateTokens({
+        id: createdUser.id,
+        device_token: createdUser.device_token,
+        role_id: createdUser.roles_id,
+      });
       delete createdUser.password;
       return {
-        accessToken,
+        ...tokens,
         user: createdUser,
       };
     } catch (e) {
@@ -139,11 +153,32 @@ export class AuthService implements IAuthService {
     }
   }
 
-  public async me(id: number) {
-    return this.prismaService.user.findUnique({
-      where: {
-        id,
-      },
-    });
+  public async enableTwoFaForUser(userId: number): Promise<ITwoFaResponse> {
+    try {
+      const secret = nanoid();
+      const token = authenticator.generate(secret);
+      const user = await this.userService.updateUserTwoFaSecret(userId, token);
+      const uri = authenticator.keyuri(user.email, 'microservices', secret);
+      return { secret, uri };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  public async verifyTwoFactorAuth(
+    userId: number,
+    token: string,
+  ): Promise<boolean> {
+    try {
+      const user = await this.userService.getUserById(userId);
+      if (user && user.two_factor_secret) {
+        const isValid = authenticator.check(user.two_factor_secret, token);
+        return isValid;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      throw e;
+    }
   }
 }

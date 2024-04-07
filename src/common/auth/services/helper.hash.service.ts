@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class HelperService {
+export class HelperHashService {
   public salt: string;
   constructor() {
     this.salt = bcrypt.genSaltSync();

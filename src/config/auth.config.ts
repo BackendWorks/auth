@@ -10,12 +10,11 @@ export default registerAs(
   (): Record<string, any> => ({
     accessToken: {
       secret: process.env.ACCESS_TOKEN_SECRET_KEY,
-      expirationTime: seconds(process.env.ACCESS_TOKEN_EXPIRED ?? '1h'),
+      expirationTime: seconds(process.env.ACCESS_TOKEN_EXPIRED ?? '1d'),
     },
-    cognito: {
-      poolId: process.env.AWS_COGNITO_USER_POOL_ID,
-      clientId: process.env.AWS_COGNITO_CLIENT_ID,
-      authority: process.env.AWS_COGNITO_AUTHORITY,
+    refreshToken: {
+      secret: process.env.REFRESH_TOKEN_SECRET_KEY,
+      expirationTime: seconds(process.env.REFRESH_TOKEN_EXPIRED ?? '7d'),
     },
   }),
 );

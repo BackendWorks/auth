@@ -6,6 +6,7 @@ import {
   SwaggerCustomOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
+import { writeFileSync } from 'fs';
 
 export const setupSwagger = async (app: INestApplication) => {
   const configService = app.get(ConfigService);
@@ -24,11 +25,16 @@ export const setupSwagger = async (app: INestApplication) => {
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'accessToken',
     )
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'refreshToken',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, documentBuild, {
     deepScanRoutes: true,
   });
+  // writeFileSync('./swagger.json', JSON.stringify(document));
   const customOptions: SwaggerCustomOptions = {
     swaggerOptions: {
       persistAuthorization: true,

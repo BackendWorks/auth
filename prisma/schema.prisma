@@ -13,24 +13,37 @@ datasource db {
 model User {
   id                Int       @id @default(autoincrement())
   email             String    @unique
-  username          String    @unique
+  username          String?   @unique
   password          String?
-  cognito_sub       String?   @unique
-  first_name        String
-  last_name         String
+  first_name        String?
+  last_name         String?
   is_verified       Boolean   @default(false)
   phone             String?
-  role              Role      @default(USER)
+  role              Roles     @relation(fields: [roles_id], references: [id])
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
   deleted_at        DateTime?
   is_deleted        Boolean?
-  profile           String?
+  profile_picture   String?
   two_factor_secret String?
   device_token      String?   @unique
+  roles_id          String
 }
 
-enum Role {
-  USER
-  ADMIN
+model Roles {
+  id          String        @id @default(uuid())
+  name        String
+  permissions Permissions[]
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  user        User[]
+}
+
+model Permissions {
+  id         String   @id @default(uuid())
+  module     String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  roles      Roles?   @relation(fields: [roles_id], references: [id])
+  roles_id   String?
 }

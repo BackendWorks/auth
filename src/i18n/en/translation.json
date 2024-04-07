@@ -1,4 +1,6 @@
 {
   "userExists": "An account with email is already exists.",
-  "accessTokenUnauthorized": "Access token is unauthorized."
+  "accessTokenUnauthorized": "Access token is unauthorized.",
+  "userNotFound": "User not found.",
+  "refreshTokenUnauthorized": "Refresh token is unauthorized."
 }
