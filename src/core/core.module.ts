@@ -4,6 +4,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { GlobalExceptionFilter } from './interceptors/exception.interceptor';
 import { LoggingMiddleware } from './middlewares/logging.middleware';
+import { PrismaService } from './services/prisma.service';
 
 @Module({
   controllers: [],
@@ -21,7 +22,9 @@ import { LoggingMiddleware } from './middlewares/logging.middleware';
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
+    PrismaService,
   ],
+  exports: [PrismaService],
 })
 export class CoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

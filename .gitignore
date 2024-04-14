@@ -39,4 +39,4 @@ lerna-debug.log*
 !.env.docker
 !.env.local
 junit.xml
-firebase.config.json
+swagger.json

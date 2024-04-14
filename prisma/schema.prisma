@@ -32,7 +32,7 @@ model User {
 
 model Roles {
   id          String        @id @default(uuid())
-  name        String
+  name        String        @unique
   permissions Permissions[]
   created_at  DateTime      @default(now())
   updated_at  DateTime      @updatedAt

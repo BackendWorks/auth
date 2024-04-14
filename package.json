@@ -12,8 +12,8 @@
     "start": "node dist/main",
     "migrate": "dotenv -e .env.local -- prisma migrate dev",
     "migrate:prod": "prisma migrate deploy",
-    "seed:role": "dotenv -e .env.local -- nestjs-command seed:role",
-    "rollback:role": "dotenv -e .env.local -- nestjs-command rollback:role",
+    "seed:role": "dotenv -e .env.local -- ts-node ./src/seeders/roles/create.roles.seed.ts",
+    "rollback:role": "dotenv -e .env.local -- ts-node ./src/seeders/roles/rollback.roles.seed.ts",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "jest",
@@ -44,9 +44,7 @@
     "jest-junit": "^16.0.0",
     "moment": "^2.30.1",
     "nanoid": "3.0.0",
-    "nestjs-command": "^3.1.4",
     "nestjs-i18n": "^10.4.5",
-    "otplib": "^12.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.11.5",
@@ -99,23 +97,13 @@
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "<4.5"
+    "typescript": "<4.8"
   },
   "prettier": {
     "singleQuote": true,
     "trailingComma": "all",
     "useTabs": false,
-    "tabWidth": 2,
-    "overrides": [
-      {
-        "files": "*.yml",
-        "options": {
-          "tadWidth": 2,
-          "printWidth": 40,
-          "singleQuote": true
-        }
-      }
-    ]
+    "tabWidth": 2
   },
   "jest": {
     "moduleFileExtensions": [
@@ -145,7 +133,7 @@
     ]
   },
   "lint-staged": {
-    "*.{js,ts}": "npm run lint:fix",
+    "*.{js,ts}": "yarn lint:fix",
     "*.{ts,js,json,md}": "prettier --write"
   }
 }

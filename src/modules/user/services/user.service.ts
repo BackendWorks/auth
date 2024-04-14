@@ -1,13 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { PrismaService } from '../../../core/services/prisma.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
-import { UserCreateDto } from 'src/common/auth/dtos/auth.signup.dto';
+import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {
     //
+  }
+
+  public async getUserById(userId: number): Promise<User> {
+    return this.prismaService.user.findUnique({ where: { id: userId } });
+  }
+
+  public async getUserByEmail(email: string): Promise<User> {
+    return this.prismaService.user.findUnique({ where: { email } });
   }
 
   public async updateUser(userId: number, data: UpdateUserDto): Promise<User> {
@@ -59,14 +67,6 @@ export class UserService {
         username: data?.username.trim(),
       },
     });
-  }
-
-  public async getUserById(userId: number): Promise<User> {
-    return this.prismaService.user.findUnique({ where: { id: userId } });
-  }
-
-  public async getUserByEmail(email: string): Promise<User> {
-    return this.prismaService.user.findUnique({ where: { email } });
   }
 
   public async softDeleteUsers(

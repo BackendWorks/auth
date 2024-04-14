@@ -8,32 +8,31 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
-import { isDev } from 'src/app/app.constant';
 
-@Catch(HttpException)
+@Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(private readonly i18n: I18nService) {}
+  constructor(private readonly i18nService: I18nService) {}
 
-  async catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
+    const request = context.getRequest<Request>();
 
     const statusCode =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const errorMessageKey =
-      exception instanceof HttpException
-        ? exception.message
-        : 'error.internalServerError';
-    const message = await this.i18n.t(`translation.${errorMessageKey}`);
+    const translationKey =
+      exception instanceof HttpException && exception.message
+        ? `translations.${exception.message}`
+        : 'translations.defaultErrorMessage';
 
-    if (isDev && statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(exception);
-    }
+    const message = this.i18nService.translate(translationKey, {
+      lang: request.headers['accept-language'] || 'en',
+    });
 
     const errorResponse = {
       statusCode,
@@ -41,8 +40,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
-    if (isDev || statusCode !== HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(`Error: ${JSON.stringify(errorResponse)}`);
+    if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
+      const errorDetails = {
+        ...errorResponse,
+        stack: exception instanceof Error ? exception.stack : undefined,
+      };
+      this.logger.error(JSON.stringify(errorDetails));
+    } else {
+      this.logger.error(JSON.stringify(errorResponse));
     }
 
     response.status(statusCode).json(errorResponse);

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { PrismaService } from 'src/common/services/prisma.service';
+import { PrismaService } from 'src/core/services/prisma.service';
 import { AppModule } from 'src/app/app.module';
 
 describe('AppController (e2e)', () => {

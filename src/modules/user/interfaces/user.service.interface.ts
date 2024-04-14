@@ -1,6 +1,6 @@
 import { Prisma, User } from '@prisma/client';
 import { UpdateUserDto } from '../dtos/update.user.dto';
-import { UserCreateDto } from 'src/common/auth/dtos/auth.signup.dto';
+import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
 
 export interface IUserService {
   updateUser(userId: number, data: UpdateUserDto): Promise<User>;

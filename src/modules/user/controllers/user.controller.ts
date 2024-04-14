@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
 import { AuthUser } from 'src/core/decorators/auth.user.decorator';
-import { IAuthPayload } from 'src/common/auth/interfaces/auth.interface';
+import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('users')
 @Controller({
   version: '1',
-  path: '/user',
+  path: '/users',
 })
 export class UserController {
   constructor(private readonly userService: UserService) {
@@ -18,12 +20,7 @@ export class UserController {
     return this.userService.updateUser(id, data);
   }
 
-  @Delete()
-  deleteUser(@Param('id') id: number) {
-    return this.userService.softDeleteUsers([id]);
-  }
-
-  @Get()
+  @Get('profile')
   getProfileInfo(@AuthUser() user: IAuthPayload) {
     return this.userService.getUserById(user.id);
   }

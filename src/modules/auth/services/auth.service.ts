@@ -6,20 +6,17 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { authenticator } from 'otplib';
 import {
   IAuthPayload,
   IAuthResponse,
   ITokenResponse,
-  ITwoFaResponse,
 } from '../interfaces/auth.interface';
-import { UserService } from '../../../modules/user/services/user.service';
+import { UserService } from '../../user/services/user.service';
 import { UserLoginDto } from '../dtos/auth.login.dto';
 import { UserCreateDto } from '../dtos/auth.signup.dto';
 import { HelperHashService } from './helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
-import { TokenType } from '../../../app/app.constant';
-import { nanoid } from 'nanoid';
+import { TokenType } from '../../../app/app.enum';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -148,35 +145,6 @@ export class AuthService implements IAuthService {
         ...tokens,
         user: createdUser,
       };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  public async enableTwoFaForUser(userId: number): Promise<ITwoFaResponse> {
-    try {
-      const secret = nanoid();
-      const token = authenticator.generate(secret);
-      const user = await this.userService.updateUserTwoFaSecret(userId, token);
-      const uri = authenticator.keyuri(user.email, 'microservices', secret);
-      return { secret, uri };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  public async verifyTwoFactorAuth(
-    userId: number,
-    token: string,
-  ): Promise<boolean> {
-    try {
-      const user = await this.userService.getUserById(userId);
-      if (user && user.two_factor_secret) {
-        const isValid = authenticator.check(user.two_factor_secret, token);
-        return isValid;
-      } else {
-        return false;
-      }
     } catch (e) {
       throw e;
     }

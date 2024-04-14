@@ -34,7 +34,7 @@ export const setupSwagger = async (app: INestApplication) => {
   const document = SwaggerModule.createDocument(app, documentBuild, {
     deepScanRoutes: true,
   });
-  // writeFileSync('./swagger.json', JSON.stringify(document));
+  writeFileSync('./swagger.json', JSON.stringify(document));
   const customOptions: SwaggerCustomOptions = {
     swaggerOptions: {
       persistAuthorization: true,

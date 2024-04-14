@@ -1,38 +1,30 @@
 import { Controller, Get } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MessagePattern } from '@nestjs/microservices';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
-import { AuthService } from 'src/common/auth/services/auth.service';
-import { PrismaService } from 'src/common/services/prisma.service';
+import { AuthService } from 'src/modules/auth/services/auth.service';
+import { PrismaService } from 'src/core/services/prisma.service';
 import { TransformPayload } from 'src/core/decorators/message.decorator';
 import { Public } from 'src/core/decorators/public.decorator';
 import { UserService } from 'src/modules/user/services/user.service';
+import { GetUserByIdCallDto, ValidateTokenCallDto } from './app.interfaces';
 
 @Controller()
 export class AppController {
-  private accessTokenSecret: string;
   constructor(
     private readonly healthCheckService: HealthCheckService,
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {
-    this.accessTokenSecret = this.configService.get<string>(
-      'auth.accessToken.secret',
-    );
-  }
+  ) {}
 
-  @MessagePattern('getUserById')
-  public async getUserById(
-    @TransformPayload() payload: Record<string, number>,
-  ) {
+  @MessagePattern('getUserByIdCall')
+  public async getUserById(@TransformPayload() payload: GetUserByIdCallDto) {
     return this.userService.getUserById(payload.id);
   }
 
-  @MessagePattern('validateToken')
+  @MessagePattern('validateTokenCall')
   public async getUserByAccessToken(
-    @TransformPayload() payload: Record<string, string>,
+    @TransformPayload() payload: ValidateTokenCallDto,
   ) {
     return this.authService.verifyToken(payload.token);
   }
