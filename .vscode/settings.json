@@ -1,0 +1,27 @@
+{
+  "eslint.validate": ["javascript", "typescript"],
+  "editor.codeActionsOnSave": ["source.formatDocument", "source.fixAll.eslint"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/kong_json_schema.json": "file:///home/harsh-simform/nestjs-microservices/kong/conf/kong.yml"
+  },
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
+}

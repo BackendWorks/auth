@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { UserService } from './user.service';
-import { NotFoundException } from '@nestjs/common';
 
 const prismaServiceMock = {
   user: {
@@ -10,9 +9,6 @@ const prismaServiceMock = {
     findUnique: jest.fn(),
     updateMany: jest.fn(),
     deleteMany: jest.fn(),
-  },
-  roles: {
-    findFirst: jest.fn(),
   },
 };
 
@@ -41,14 +37,7 @@ describe('UserService', () => {
   });
 
   describe('createUser', () => {
-    it('should throw a NotFoundException if the role is not found', async () => {
-      prismaServiceMock.roles.findFirst.mockResolvedValue(null);
-      await expect(service.createUser({} as any)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('should create a user when role is found', async () => {
+    it('should create a user', async () => {
       const role = { id: 1, name: 'User' };
       const userData = {
         email: 'jane@example.com',
@@ -58,11 +47,9 @@ describe('UserService', () => {
         username: 'janedoe',
       };
       const createdUser = { ...userData, id: 2, role };
-      prismaServiceMock.roles.findFirst.mockResolvedValue(role);
       prismaServiceMock.user.create.mockResolvedValue(createdUser);
 
       const result = await service.createUser(userData as any);
-      expect(prismaService.roles.findFirst).toHaveBeenCalled();
       expect(prismaService.user.create).toHaveBeenCalledWith({
         data: expect.anything(),
       });

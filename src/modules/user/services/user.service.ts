@@ -1,23 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
-import { UserCreateDto } from 'src/common/auth/dtos/auth.signup.dto';
+import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {
-    //
-  }
+  constructor(private readonly prismaService: PrismaService) {}
 
   public async updateUser(userId: number, data: UpdateUserDto): Promise<User> {
-    const { firstName, lastName, email, phone } = data;
+    const { firstName, lastName, email, phone, profilePicture } = data;
     return this.prismaService.user.update({
       data: {
         first_name: firstName?.trim(),
         last_name: lastName?.trim(),
         email,
         phone,
+        profile_picture: profilePicture,
       },
       where: {
         id: userId,
@@ -37,25 +36,13 @@ export class UserService {
   }
 
   public async createUser(data: UserCreateDto): Promise<User> {
-    const role = await this.prismaService.roles.findFirst({
-      where: {
-        name: 'User',
-      },
-    });
-    if (!role) {
-      throw new NotFoundException('roleNotFound');
-    }
     return this.prismaService.user.create({
       data: {
         email: data?.email,
         password: data?.password,
         first_name: data?.firstName.trim(),
         last_name: data?.lastName.trim(),
-        role: {
-          connect: {
-            id: role.id,
-          },
-        },
+        role: 'User',
         username: data?.username.trim(),
       },
     });

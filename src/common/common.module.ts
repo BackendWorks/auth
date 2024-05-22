@@ -1,6 +1,6 @@
 import configs from '../config';
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from '../modules/auth/auth.module';
 import { PrismaService } from './services/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 

@@ -1,5 +1,5 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiProperty()
@@ -22,7 +22,8 @@ export class UpdateUserDto {
   @IsOptional()
   public lastName?: string;
 
-  @ApiHideProperty()
+  @ApiProperty()
+  @IsString()
   @IsOptional()
-  public two_factor_secret?: string;
+  public profilePicture?: string;
 }

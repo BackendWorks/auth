@@ -6,20 +6,17 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { authenticator } from 'otplib';
 import {
   IAuthPayload,
   IAuthResponse,
   ITokenResponse,
-  ITwoFaResponse,
 } from '../interfaces/auth.interface';
-import { UserService } from '../../../modules/user/services/user.service';
+import { UserService } from '../../user/services/user.service';
 import { UserLoginDto } from '../dtos/auth.login.dto';
 import { UserCreateDto } from '../dtos/auth.signup.dto';
 import { HelperHashService } from './helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
 import { TokenType } from '../../../app/app.constant';
-import { nanoid } from 'nanoid';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -64,7 +61,7 @@ export class AuthService implements IAuthService {
       const accessTokenPromise = this.jwtService.signAsync(
         {
           id: user.id,
-          role: user.role_id,
+          role: user.role,
           deviceToken: user.device_token,
           tokenType: TokenType.ACCESS_TOKEN,
         },
@@ -76,7 +73,7 @@ export class AuthService implements IAuthService {
       const refreshTokenPromise = this.jwtService.signAsync(
         {
           id: user.id,
-          role: user.role_id,
+          role: user.role,
           deviceToken: user.device_token,
           tokenType: TokenType.REFRESH_TOKEN,
         },
@@ -112,7 +109,7 @@ export class AuthService implements IAuthService {
       const tokens = await this.generateTokens({
         id: user.id,
         device_token: user.device_token,
-        role_id: user.roles_id,
+        role: user.role,
       });
       return {
         ...tokens,
@@ -141,42 +138,13 @@ export class AuthService implements IAuthService {
       const tokens = await this.generateTokens({
         id: createdUser.id,
         device_token: createdUser.device_token,
-        role_id: createdUser.roles_id,
+        role: createdUser.role,
       });
       delete createdUser.password;
       return {
         ...tokens,
         user: createdUser,
       };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  public async enableTwoFaForUser(userId: number): Promise<ITwoFaResponse> {
-    try {
-      const secret = nanoid();
-      const token = authenticator.generate(secret);
-      const user = await this.userService.updateUserTwoFaSecret(userId, token);
-      const uri = authenticator.keyuri(user.email, 'microservices', secret);
-      return { secret, uri };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  public async verifyTwoFactorAuth(
-    userId: number,
-    token: string,
-  ): Promise<boolean> {
-    try {
-      const user = await this.userService.getUserById(userId);
-      if (user && user.two_factor_secret) {
-        const isValid = authenticator.check(user.two_factor_secret, token);
-        return isValid;
-      } else {
-        return false;
-      }
     } catch (e) {
       throw e;
     }

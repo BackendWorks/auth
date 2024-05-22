@@ -11,11 +11,6 @@ export interface IAuthResponse extends ITokenResponse {
 
 export interface IAuthPayload {
   id: number;
-  role_id: string;
+  role: string;
   device_token: string;
-}
-
-export interface ITwoFaResponse {
-  uri: string;
-  secret: string;
 }

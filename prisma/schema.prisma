@@ -19,7 +19,7 @@ model User {
   last_name         String?
   is_verified       Boolean   @default(false)
   phone             String?
-  role              Roles     @relation(fields: [roles_id], references: [id])
+  role              Roles
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
   deleted_at        DateTime?
@@ -27,23 +27,12 @@ model User {
   profile_picture   String?
   two_factor_secret String?
   device_token      String?   @unique
-  roles_id          String
+
+  @@map("users")
 }
 
-model Roles {
-  id          String        @id @default(uuid())
-  name        String
-  permissions Permissions[]
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  user        User[]
-}
-
-model Permissions {
-  id         String   @id @default(uuid())
-  module     String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  roles      Roles?   @relation(fields: [roles_id], references: [id])
-  roles_id   String?
+enum Roles {
+  Admin
+  User
+  Developer
 }

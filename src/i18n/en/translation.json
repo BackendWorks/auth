@@ -2,5 +2,6 @@
   "userExists": "An account with email is already exists.",
   "accessTokenUnauthorized": "Access token is unauthorized.",
   "userNotFound": "User not found.",
-  "refreshTokenUnauthorized": "Refresh token is unauthorized."
+  "refreshTokenUnauthorized": "Refresh token is unauthorized.",
+  "internalServerError": "Internal server error."
 }

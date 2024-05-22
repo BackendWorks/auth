@@ -2,10 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../../../modules/user/services/user.service';
+import { UserService } from '../../user/services/user.service';
 import { HelperHashService } from './helper.hash.service';
 import { HttpException, NotFoundException } from '@nestjs/common';
-import { authenticator } from 'otplib';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
 
@@ -193,69 +192,6 @@ describe('AuthService', () => {
       );
       jest.clearAllMocks();
       expect(userService.createUser).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('enableTwoFaForUser', () => {
-    it('should enable 2FA for a user', async () => {
-      const userId = 1;
-      const token = 'generatedToken';
-      const email = 'user@example.com';
-
-      userServiceMock.updateUserTwoFaSecret.mockResolvedValue({
-        id: userId,
-        email,
-        two_factor_secret: token,
-      });
-
-      const result = await service.enableTwoFaForUser(userId);
-
-      expect(result).toEqual(expect.any(Object));
-    });
-  });
-
-  describe('verifyTwoFactorAuth', () => {
-    it('should return true for valid 2FA token', async () => {
-      const userId = 1;
-      const token = '123456';
-      const userWith2FASecret = { id: userId, two_factor_secret: 'SECRET' };
-
-      userServiceMock.getUserById.mockResolvedValue(userWith2FASecret);
-      jest.spyOn(authenticator, 'check').mockReturnValue(true);
-
-      const isValid = await service.verifyTwoFactorAuth(userId, token);
-
-      expect(userService.getUserById).toHaveBeenCalledWith(userId);
-      expect(authenticator.check).toHaveBeenCalledWith(
-        userWith2FASecret.two_factor_secret,
-        token,
-      );
-      expect(isValid).toBe(true);
-    });
-
-    it('should return false for invalid 2FA token', async () => {
-      const userId = 1;
-      const token = 'wrong_token';
-      const userWith2FASecret = { id: userId, two_factor_secret: 'SECRET' };
-
-      userServiceMock.getUserById.mockResolvedValue(userWith2FASecret);
-      jest.spyOn(authenticator, 'check').mockReturnValue(false);
-
-      const isValid = await service.verifyTwoFactorAuth(userId, token);
-
-      expect(isValid).toBe(false);
-    });
-
-    it('should return false if user does not have 2FA secret', async () => {
-      const userId = 1;
-      const token = '123456';
-      const userWithout2FASecret = { id: userId, two_factor_secret: null };
-
-      userServiceMock.getUserById.mockResolvedValue(userWithout2FASecret);
-
-      const isValid = await service.verifyTwoFactorAuth(userId, token);
-
-      expect(isValid).toBe(false);
     });
   });
 });

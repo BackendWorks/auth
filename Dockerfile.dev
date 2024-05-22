@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 COPY prisma ./prisma/
 
-RUN yarn
+RUN yarn install --frozen-lockfile
 
 COPY . .
 

@@ -4,7 +4,7 @@ import { AuthService } from './services/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthJwtAccessGuard } from './guards/jwt.access.guard';
-import { PrismaService } from '../services/prisma.service';
+import { PrismaService } from '../../common/services/prisma.service';
 import { AuthController } from './controllers/auth.controller';
 import { AuthJwtRefreshStrategy } from './strategies/jwt.refresh.strategy';
 import { HelperHashService } from './services/helper.hash.service';

@@ -1,17 +1,17 @@
 import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
-import { AuthUser } from 'src/core/decorators/auth.user.decorator';
-import { IAuthPayload } from 'src/common/auth/interfaces/auth.interface';
+import { AuthUser } from 'src/decorators/auth.user.decorator';
+import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('user')
 @Controller({
   version: '1',
   path: '/user',
 })
 export class UserController {
-  constructor(private readonly userService: UserService) {
-    //
-  }
+  constructor(private readonly userService: UserService) {}
 
   @Put()
   updateUser(@Param('id') id: number, @Body() data: UpdateUserDto) {
