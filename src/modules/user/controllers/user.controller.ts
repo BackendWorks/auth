@@ -4,6 +4,8 @@ import { UpdateUserDto } from '../dtos/update.user.dto';
 import { AuthUser } from 'src/decorators/auth.user.decorator';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { ApiTags } from '@nestjs/swagger';
+import { MessagePattern } from '@nestjs/microservices';
+import { TransformPayload } from 'src/decorators/message.decorator';
 
 @ApiTags('user')
 @Controller({
@@ -12,6 +14,11 @@ import { ApiTags } from '@nestjs/swagger';
 })
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @MessagePattern('getUserById')
+  public async getUserById(@TransformPayload() payload: Record<string, any>) {
+    return this.userService.getUserById(payload.userId);
+  }
 
   @Put()
   updateUser(@Param('id') id: number, @Body() data: UpdateUserDto) {

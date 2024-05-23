@@ -7,6 +7,8 @@ import { UserLoginDto } from '../dtos/auth.login.dto';
 import { IAuthPayload } from '../interfaces/auth.interface';
 import { AuthJwtRefreshGuard } from '../guards/jwt.refresh.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { MessagePattern } from '@nestjs/microservices';
+import { TransformPayload } from 'src/decorators/message.decorator';
 
 @ApiTags('auth')
 @Controller({
@@ -15,6 +17,13 @@ import { ApiTags } from '@nestjs/swagger';
 })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @MessagePattern('validateToken')
+  public async getUserByAccessToken(
+    @TransformPayload() payload: Record<string, any>,
+  ) {
+    return this.authService.verifyToken(payload.token);
+  }
 
   @Public()
   @Post('login')
