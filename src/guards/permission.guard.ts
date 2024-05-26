@@ -12,7 +12,7 @@ import { PrismaService } from 'src/common/services/prisma.service';
 export class PermissionsGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,7 +28,7 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
     const method = request.method;
 
-    const userPermissions = await this.prisma.permission.findMany({
+    const userPermissions = await this.prismaService.permission.findMany({
       where: {
         role: user.role,
         module: 'User',

@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
 import { TransformMessagePayload } from 'src/decorators/payload.decorator';
 import { AuthUser } from 'src/decorators/auth.decorator';
@@ -26,9 +26,10 @@ export class UserController {
     return this.userService.getUserById(payload.userId);
   }
 
+  @ApiBearerAuth('accessToken')
   @Put(':id')
   @Serialize(UserResponseDto)
-  @AllowedRoles(Roles.User)
+  @AllowedRoles([Roles.User, Roles.Admin])
   updateUser(
     @Param('id') id: number,
     @Body() data: UpdateUserDto,
@@ -36,9 +37,10 @@ export class UserController {
     return this.userService.updateUser(id, data);
   }
 
+  @ApiBearerAuth('accessToken')
   @Get('profile')
   @Serialize(UserResponseDto)
-  @AllowedRoles(Roles.User)
+  @AllowedRoles([Roles.User, Roles.Admin])
   getUserInfo(@AuthUser() user: IAuthPayload): Promise<UserResponseDto> {
     return this.userService.getUserById(user.id);
   }

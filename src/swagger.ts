@@ -35,7 +35,13 @@ export const setupSwagger = async (app: INestApplication) => {
   });
   const customOptions: SwaggerCustomOptions = {
     swaggerOptions: {
+      docExpansion: 'none',
       persistAuthorization: true,
+      displayOperationId: true,
+      operationsSorter: 'method',
+      tagsSorter: 'alpha',
+      tryItOutEnabled: true,
+      filter: true,
     },
   };
   SwaggerModule.setup(docPrefix, app, document, {

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   IAuthPayload,
+  IGetPermissionFromRolePayload,
   ITokenResponse,
   TokenType,
 } from '../interfaces/auth.interface';
@@ -17,6 +18,8 @@ import { UserCreateDto } from '../dtos/auth.signup.dto';
 import { HelperHashService } from './helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
 import { AuthResponseDto } from '../dtos/auth.response.dto';
+import { Permission } from '@prisma/client';
+import { PrismaService } from 'src/common/services/prisma.service';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -30,6 +33,7 @@ export class AuthService implements IAuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly helperHashService: HelperHashService,
+    private readonly prismaService: PrismaService,
   ) {
     this.accessTokenSecret = this.configService.get<string>(
       'auth.accessToken.secret',
@@ -43,6 +47,18 @@ export class AuthService implements IAuthService {
     this.refreshTokenExp = this.configService.get<string>(
       'auth.refreshToken.expirationTime',
     );
+  }
+
+  async getPermissionsFromRole({
+    role,
+    module,
+  }: IGetPermissionFromRolePayload): Promise<Permission[]> {
+    return this.prismaService.permission.findMany({
+      where: {
+        role,
+        module,
+      },
+    });
   }
 
   async verifyToken(accessToken: string): Promise<IAuthPayload> {

@@ -27,6 +27,16 @@ export class AuthController {
     return this.authService.verifyToken(payload.token);
   }
 
+  @MessagePattern('getUserPermissionsFromRole')
+  public async getUserPermissionsFromRole(
+    @TransformMessagePayload() payload: Record<string, any>,
+  ) {
+    return this.authService.getPermissionsFromRole({
+      role: payload.role,
+      module: payload.module,
+    });
+  }
+
   @Public()
   @Serialize(AuthResponseDto)
   @Post('login')
