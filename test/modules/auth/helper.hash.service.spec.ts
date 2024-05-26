@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
-import { HelperHashService } from './helper.hash.service';
+import { HelperHashService } from '../../../src/modules/auth/services/helper.hash.service';
 
 jest.mock('bcrypt', () => ({
   genSaltSync: jest.fn().mockReturnValue('some_salt'),

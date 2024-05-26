@@ -1,12 +1,13 @@
-import { Prisma, User } from '@prisma/client';
 import { UpdateUserDto } from '../dtos/update.user.dto';
 import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { UserResponseDto } from '../dtos/user.response.dto';
+import { GenericResponseDto } from '../dtos/generic.response.dto';
 
 export interface IUserService {
-  updateUser(userId: number, data: UpdateUserDto): Promise<User>;
-  createUser(data: UserCreateDto): Promise<User>;
-  getUserById(userId: number): Promise<User>;
-  getUserByEmail(email: string): Promise<User>;
-  softDeleteUsers(userIds: number[]): Promise<Prisma.BatchPayload>;
-  deleteUsers(userIds: number[]): Promise<Prisma.BatchPayload>;
+  updateUser(userId: number, data: UpdateUserDto): Promise<UserResponseDto>;
+  createUser(data: UserCreateDto): Promise<UserResponseDto>;
+  getUserById(userId: number): Promise<UserResponseDto>;
+  getUserByEmail(email: string): Promise<UserResponseDto>;
+  softDeleteUsers(userIds: number[]): Promise<GenericResponseDto>;
+  deleteUsers(userIds: number[]): Promise<GenericResponseDto>;
 }

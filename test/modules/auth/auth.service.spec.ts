@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../../user/services/user.service';
-import { HelperHashService } from './helper.hash.service';
 import { HttpException, NotFoundException } from '@nestjs/common';
+import { UserService } from '../../../src/modules/user/services/user.service';
+import { HelperHashService } from '../../../src/modules/auth/services/helper.hash.service';
+import { AuthService } from '../../../src/modules/auth/services/auth.service';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
 

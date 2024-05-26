@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { UserService } from './user.service';
+import { PrismaService } from '../../../src/common/services/prisma.service';
+import { UserService } from '../../../src/modules/user/services/user.service';
 
 const prismaServiceMock = {
   user: {
@@ -74,22 +74,6 @@ describe('UserService', () => {
     });
   });
 
-  describe('updateUserTwoFaSecret', () => {
-    it("should update a user's 2FA secret", async () => {
-      const userId = 1;
-      const secret = 'new_secret';
-      const updatedUser = { id: userId, two_factor_secret: secret };
-      prismaServiceMock.user.update.mockResolvedValue(updatedUser);
-
-      const result = await service.updateUserTwoFaSecret(userId, secret);
-      expect(prismaService.user.update).toHaveBeenCalledWith({
-        where: { id: userId },
-        data: { two_factor_secret: secret },
-      });
-      expect(result).toEqual(updatedUser);
-    });
-  });
-
   describe('getUserById', () => {
     it('should return a user for a given ID', async () => {
       const user = {
@@ -130,10 +114,11 @@ describe('UserService', () => {
     it('should soft delete users for given IDs', async () => {
       const userIds = [1, 2, 3];
       const batchPayload = { count: userIds.length };
+      const successResponse = { status: true, message: expect.any(String) };
       prismaServiceMock.user.updateMany.mockResolvedValue(batchPayload);
 
       const result = await service.softDeleteUsers(userIds);
-      expect(result).toEqual(batchPayload);
+      expect(result).toEqual(successResponse);
       expect(prismaServiceMock.user.updateMany).toHaveBeenCalledWith({
         where: {
           id: {
@@ -152,10 +137,11 @@ describe('UserService', () => {
     it('should delete users for given IDs', async () => {
       const userIds = [1, 2, 3];
       const batchPayload = { count: userIds.length };
+      const successResponse = { status: true, message: expect.any(String) };
       prismaServiceMock.user.deleteMany.mockResolvedValue(batchPayload);
 
       const result = await service.deleteUsers(userIds);
-      expect(result).toEqual(batchPayload);
+      expect(result).toEqual(successResponse);
       expect(prismaServiceMock.user.deleteMany).toHaveBeenCalledWith({
         where: {
           id: {

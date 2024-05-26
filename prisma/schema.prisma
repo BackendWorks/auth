@@ -11,24 +11,40 @@ datasource db {
 }
 
 model User {
-  id                Int       @id @default(autoincrement())
-  email             String    @unique
-  username          String?   @unique
-  password          String?
-  first_name        String?
-  last_name         String?
-  is_verified       Boolean   @default(false)
-  phone             String?
-  role              Roles
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  deleted_at        DateTime?
-  is_deleted        Boolean?
-  profile_picture   String?
-  two_factor_secret String?
-  device_token      String?   @unique
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  username        String?   @unique
+  password        String?
+  first_name      String?
+  last_name       String?
+  profile_picture String?
+  is_verified     Boolean   @default(false)
+  phone           String?
+  role            Roles
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+  is_deleted      Boolean   @default(false)
+  device_token    String?   @unique
 
   @@map("users")
+}
+
+model Permission {
+  id              Int            @id @default(autoincrement())
+  role            Roles
+  permission_type PermissionType
+  module          String
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  @@map("permissions")
+}
+
+enum PermissionType {
+  Read
+  Write
+  Admin
 }
 
 enum Roles {

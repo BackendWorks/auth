@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { UpdateUserDto } from '../dtos/update.user.dto';
 import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
-import { Prisma, User } from '@prisma/client';
+import { UserResponseDto } from '../dtos/user.response.dto';
+import { GenericResponseDto } from '../dtos/generic.response.dto';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  public async updateUser(userId: number, data: UpdateUserDto): Promise<User> {
+  async updateUser(
+    userId: number,
+    data: UpdateUserDto,
+  ): Promise<UserResponseDto> {
     const { firstName, lastName, email, phone, profilePicture } = data;
     return this.prismaService.user.update({
       data: {
@@ -24,18 +28,7 @@ export class UserService {
     });
   }
 
-  public async updateUserTwoFaSecret(userId: number, secret: string) {
-    return this.prismaService.user.update({
-      data: {
-        two_factor_secret: secret,
-      },
-      where: {
-        id: userId,
-      },
-    });
-  }
-
-  public async createUser(data: UserCreateDto): Promise<User> {
+  async createUser(data: UserCreateDto): Promise<UserResponseDto> {
     return this.prismaService.user.create({
       data: {
         email: data?.email,
@@ -48,18 +41,16 @@ export class UserService {
     });
   }
 
-  public async getUserById(userId: number): Promise<User> {
+  async getUserById(userId: number): Promise<UserResponseDto> {
     return this.prismaService.user.findUnique({ where: { id: userId } });
   }
 
-  public async getUserByEmail(email: string): Promise<User> {
+  async getUserByEmail(email: string): Promise<UserResponseDto> {
     return this.prismaService.user.findUnique({ where: { email } });
   }
 
-  public async softDeleteUsers(
-    userIds: number[],
-  ): Promise<Prisma.BatchPayload> {
-    return this.prismaService.user.updateMany({
+  async softDeleteUsers(userIds: number[]): Promise<GenericResponseDto> {
+    await this.prismaService.user.updateMany({
       where: {
         id: {
           in: userIds,
@@ -70,15 +61,23 @@ export class UserService {
         deleted_at: new Date(),
       },
     });
+    return {
+      status: true,
+      message: 'userDeleted',
+    };
   }
 
-  public async deleteUsers(userIds: number[]): Promise<Prisma.BatchPayload> {
-    return this.prismaService.user.deleteMany({
+  async deleteUsers(userIds: number[]): Promise<GenericResponseDto> {
+    await this.prismaService.user.deleteMany({
       where: {
         id: {
           in: userIds,
         },
       },
     });
+    return {
+      status: true,
+      message: 'userDeleted',
+    };
   }
 }

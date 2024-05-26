@@ -8,15 +8,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   IAuthPayload,
-  IAuthResponse,
   ITokenResponse,
+  TokenType,
 } from '../interfaces/auth.interface';
 import { UserService } from '../../user/services/user.service';
 import { UserLoginDto } from '../dtos/auth.login.dto';
 import { UserCreateDto } from '../dtos/auth.signup.dto';
 import { HelperHashService } from './helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
-import { TokenType } from '../../../app/app.constant';
+import { AuthResponseDto } from '../dtos/auth.response.dto';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -45,7 +45,7 @@ export class AuthService implements IAuthService {
     );
   }
 
-  public async verifyToken(accessToken: string): Promise<IAuthPayload> {
+  async verifyToken(accessToken: string): Promise<IAuthPayload> {
     try {
       const data = await this.jwtService.verifyAsync(accessToken, {
         secret: this.accessTokenSecret,
@@ -56,7 +56,7 @@ export class AuthService implements IAuthService {
     }
   }
 
-  public async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
+  async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
     try {
       const accessTokenPromise = this.jwtService.signAsync(
         {
@@ -95,7 +95,7 @@ export class AuthService implements IAuthService {
     }
   }
 
-  public async login(data: UserLoginDto): Promise<IAuthResponse> {
+  async login(data: UserLoginDto): Promise<AuthResponseDto> {
     try {
       const { email, password } = data;
       const user = await this.userService.getUserByEmail(email);
@@ -106,13 +106,14 @@ export class AuthService implements IAuthService {
       if (!match) {
         throw new NotFoundException('invalidPassword');
       }
-      const tokens = await this.generateTokens({
+      const { accessToken, refreshToken } = await this.generateTokens({
         id: user.id,
         device_token: user.device_token,
         role: user.role,
       });
       return {
-        ...tokens,
+        accessToken,
+        refreshToken,
         user,
       };
     } catch (e) {
@@ -120,7 +121,7 @@ export class AuthService implements IAuthService {
     }
   }
 
-  public async signup(data: UserCreateDto): Promise<IAuthResponse> {
+  async signup(data: UserCreateDto): Promise<AuthResponseDto> {
     try {
       const { email, firstName, lastName, password, username } = data;
       const findUser = await this.userService.getUserByEmail(email);
