@@ -7,7 +7,7 @@ function seconds(msValue: string): number {
 
 export default registerAs(
   'auth',
-  (): Record<string, any> => ({
+  (): Record<string, unknown> => ({
     accessToken: {
       secret: process.env.ACCESS_TOKEN_SECRET_KEY,
       expirationTime: seconds(process.env.ACCESS_TOKEN_EXPIRED ?? '1d'),
