@@ -3,11 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Transport } from '@nestjs/microservices';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { AppModule } from './app/app.module';
-import { setupSwagger } from './swagger';
-
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+
+import { AppModule } from './app/app.module';
+import { setupSwagger } from './swagger';
 
 async function bootstrap() {
   const logger = new Logger();
@@ -22,11 +22,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const expressApp = app.getHttpAdapter().getInstance();
 
-  // add root message
   expressApp.get('/', (_req: Request, res: Response) => {
     res.status(200).json({
       status: 200,
-      message: `Message from ${configService.get('app.name')}`,
+      message: `Hello from ${configService.get('app.name')}`,
       data: {
         timestamp: new Date(),
       },

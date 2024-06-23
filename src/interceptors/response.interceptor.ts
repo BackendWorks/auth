@@ -8,49 +8,61 @@ import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { Reflector } from '@nestjs/core';
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { I18nService } from 'nestjs-i18n';
-import { firstValueFrom, of } from 'rxjs';
+import { Observable, firstValueFrom, of } from 'rxjs';
 import {
-  HTTP_SUCCESS_STATUS_MESSAGES,
+  RESPONSE_MESSAGE_META_KEY,
   RESPONSE_SERIALIZATION_META_KEY,
 } from 'src/app/app.constant';
-import { GenericResponseDto } from 'src/modules/user/dtos/generic.response.dto';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
   constructor(
+    private readonly i18n: I18nService,
     private readonly reflector: Reflector,
-    private readonly i18nService: I18nService,
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<any> {
-    const body = await firstValueFrom(next.handle());
-    const status =
-      this.reflector.get<number>('__httpCode__', context.getHandler()) || 200;
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<unknown>> {
     const ctx: HttpArgumentsHost = context.switchToHttp();
-    const request = ctx.getRequest();
+    const response = ctx.getResponse();
+    const statusCode: number = response.statusCode;
 
-    const classSerialization: ClassConstructor<any> = this.reflector.get<
-      ClassConstructor<any>
-    >(RESPONSE_SERIALIZATION_META_KEY, context.getHandler());
+    const messageSerialization: string = this.reflector.get<string>(
+      RESPONSE_MESSAGE_META_KEY,
+      context.getHandler(),
+    );
 
-    if (classSerialization?.name === GenericResponseDto?.name) {
-      const getData = body as unknown as GenericResponseDto;
-      getData.message = this.i18nService.translate(getData.message, {
-        lang: request.headers['accept-language'] || 'en',
-        defaultValue: 'Operation successful.',
-      });
-      const responseData = plainToInstance(classSerialization, getData);
+    if (messageSerialization) {
+      const message = await this.i18n.t(messageSerialization);
+
       return of({
-        statusCode: status,
-        message: HTTP_SUCCESS_STATUS_MESSAGES[status],
-        data: responseData,
+        statusCode,
+        timestamp: new Date().toISOString(),
+        message,
+        data: null,
       });
     }
-    const responseData = plainToInstance(classSerialization, body);
+
+    const responseBody = await firstValueFrom(next.handle());
+
+    const message = await this.i18n.t(`response.${statusCode}`);
+
+    const classSerialization: ClassConstructor<unknown> = this.reflector.get<
+      ClassConstructor<unknown>
+    >(RESPONSE_SERIALIZATION_META_KEY, context.getHandler());
+
+    const serializedResponse = plainToInstance(
+      classSerialization,
+      responseBody,
+    );
+
     return of({
-      statusCode: status,
-      message: HTTP_SUCCESS_STATUS_MESSAGES[status],
-      data: responseData,
+      statusCode,
+      timestamp: new Date().toISOString(),
+      message,
+      data: serializedResponse,
     });
   }
 }

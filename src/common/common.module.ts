@@ -1,13 +1,12 @@
-import configs from '../config';
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../modules/auth/auth.module';
-import { PrismaService } from './services/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 
+import configs from '../config';
+import { PrismaService } from './services/prisma.service';
+import { HelperHashService } from './services/helper.hash.service';
+
 @Module({
-  controllers: [],
   imports: [
-    AuthModule,
     ConfigModule.forRoot({
       load: configs,
       isGlobal: true,
@@ -16,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       expandVariables: true,
     }),
   ],
-  providers: [PrismaService],
-  exports: [PrismaService],
+  providers: [PrismaService, HelperHashService],
+  exports: [PrismaService, HelperHashService],
 })
 export class CommonModule {}

@@ -1,25 +1,22 @@
 import {
-  HttpException,
-  HttpStatus,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+
 import {
   IAuthPayload,
-  IGetPermissionFromRolePayload,
   ITokenResponse,
   TokenType,
 } from '../interfaces/auth.interface';
 import { UserService } from '../../user/services/user.service';
-import { UserLoginDto } from '../dtos/auth.login.dto';
-import { UserCreateDto } from '../dtos/auth.signup.dto';
-import { HelperHashService } from './helper.hash.service';
+import { HelperHashService } from '../../../common/services/helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
 import { AuthResponseDto } from '../dtos/auth.response.dto';
-import { Permission } from '@prisma/client';
-import { PrismaService } from 'src/common/services/prisma.service';
+import { AuthLoginDto } from '../dtos/auth.login.dto';
+import { AuthSingupDto } from '../dtos/auth.signup.dto';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -33,7 +30,6 @@ export class AuthService implements IAuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly helperHashService: HelperHashService,
-    private readonly prismaService: PrismaService,
   ) {
     this.accessTokenSecret = this.configService.get<string>(
       'auth.accessToken.secret',
@@ -49,23 +45,12 @@ export class AuthService implements IAuthService {
     );
   }
 
-  async getPermissionsFromRole({
-    role,
-    module,
-  }: IGetPermissionFromRolePayload): Promise<Permission[]> {
-    return this.prismaService.permission.findMany({
-      where: {
-        role,
-        module,
-      },
-    });
-  }
-
   async verifyToken(accessToken: string): Promise<IAuthPayload> {
     try {
       const data = await this.jwtService.verifyAsync(accessToken, {
         secret: this.accessTokenSecret,
       });
+
       return data;
     } catch (e) {
       throw e;
@@ -78,7 +63,6 @@ export class AuthService implements IAuthService {
         {
           id: user.id,
           role: user.role,
-          deviceToken: user.device_token,
           tokenType: TokenType.ACCESS_TOKEN,
         },
         {
@@ -86,11 +70,11 @@ export class AuthService implements IAuthService {
           expiresIn: this.accessTokenExp,
         },
       );
+
       const refreshTokenPromise = this.jwtService.signAsync(
         {
           id: user.id,
           role: user.role,
-          deviceToken: user.device_token,
           tokenType: TokenType.REFRESH_TOKEN,
         },
         {
@@ -98,10 +82,12 @@ export class AuthService implements IAuthService {
           expiresIn: this.refreshTokenExp,
         },
       );
+
       const [accessToken, refreshToken] = await Promise.all([
         accessTokenPromise,
         refreshTokenPromise,
       ]);
+
       return {
         accessToken,
         refreshToken,
@@ -111,22 +97,27 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async login(data: UserLoginDto): Promise<AuthResponseDto> {
+  async login(data: AuthLoginDto): Promise<AuthResponseDto> {
     try {
       const { email, password } = data;
+
       const user = await this.userService.getUserByEmail(email);
+
       if (!user) {
-        throw new NotFoundException('userNotFound');
+        throw new NotFoundException('user.userNotFound');
       }
-      const match = this.helperHashService.match(user.password, password);
+
+      const match = await this.helperHashService.match(user.password, password);
+
       if (!match) {
-        throw new NotFoundException('invalidPassword');
+        throw new NotFoundException('user.invalidPassword');
       }
+
       const { accessToken, refreshToken } = await this.generateTokens({
         id: user.id,
-        device_token: user.device_token,
         role: user.role,
       });
+
       return {
         accessToken,
         refreshToken,
@@ -137,14 +128,22 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async signup(data: UserCreateDto): Promise<AuthResponseDto> {
+  async signup(data: AuthSingupDto): Promise<AuthResponseDto> {
     try {
       const { email, firstName, lastName, password, username } = data;
-      const findUser = await this.userService.getUserByEmail(email);
-      if (findUser) {
-        throw new HttpException('userExists', HttpStatus.CONFLICT);
+      const findByEmail = await this.userService.getUserByEmail(email);
+      const findByUserName = await this.userService.getUserByUserName(username);
+
+      if (findByEmail) {
+        throw new ConflictException('user.userExistsByEmail');
       }
+
+      if (findByUserName) {
+        throw new ConflictException('user.userExistsByUserName');
+      }
+
       const passwordHashed = this.helperHashService.createHash(password);
+
       const createdUser = await this.userService.createUser({
         email,
         firstName: firstName?.trim(),
@@ -152,12 +151,12 @@ export class AuthService implements IAuthService {
         password: passwordHashed,
         username: username?.trim(),
       });
+
       const tokens = await this.generateTokens({
         id: createdUser.id,
-        device_token: createdUser.device_token,
         role: createdUser.role,
       });
-      delete createdUser.password;
+
       return {
         ...tokens,
         user: createdUser,

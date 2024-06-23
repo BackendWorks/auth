@@ -3,7 +3,8 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class HelperHashService {
-  public salt: string;
+  private readonly salt: string;
+
   constructor() {
     this.salt = bcrypt.genSaltSync();
   }

@@ -1,8 +1,0 @@
-{
-  "userExists": "An account with email is already exists.",
-  "userNotFound": "User not found.",
-  "refreshTokenUnauthorized": "Refresh token is unauthorized.",
-  "accessTokenUnauthorized": "Access token is not authorized.",
-  "internalServerError": "Internal server error.",
-  "notHaveEnoughPermissions": "You do not have permission to execute this operation."
-}

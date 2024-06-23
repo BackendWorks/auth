@@ -1,16 +1,20 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Public } from 'src/decorators/public.decorator';
-import { AuthService } from '../services/auth.service';
-import { UserCreateDto } from '../dtos/auth.signup.dto';
-import { UserLoginDto } from '../dtos/auth.login.dto';
-import { IAuthPayload } from '../interfaces/auth.interface';
-import { AuthJwtRefreshGuard } from '../../../guards/jwt.refresh.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
 import { TransformMessagePayload } from 'src/decorators/payload.decorator';
 import { AuthUser } from 'src/decorators/auth.decorator';
-import { AuthResponseDto } from '../dtos/auth.response.dto';
 import { Serialize } from 'src/decorators/serialize.decorator';
+
+import {
+  AuthRefreshResponseDto,
+  AuthResponseDto,
+} from '../dtos/auth.response.dto';
+import { AuthJwtRefreshGuard } from '../../../guards/jwt.refresh.guard';
+import { IAuthPayload } from '../interfaces/auth.interface';
+import { AuthService } from '../services/auth.service';
+import { AuthLoginDto } from '../dtos/auth.login.dto';
+import { AuthSingupDto } from '../dtos/auth.signup.dto';
 
 @ApiTags('auth')
 @Controller({
@@ -27,31 +31,26 @@ export class AuthController {
     return this.authService.verifyToken(payload.token);
   }
 
-  @MessagePattern('getUserPermissionsFromRole')
-  public async getUserPermissionsFromRole(
-    @TransformMessagePayload() payload: Record<string, any>,
-  ) {
-    return this.authService.getPermissionsFromRole({
-      role: payload.role,
-      module: payload.module,
-    });
-  }
-
   @Public()
-  @Serialize(AuthResponseDto)
+  @Serialize({ serialization: AuthResponseDto })
   @Post('login')
-  public login(@Body() payload: UserLoginDto): Promise<AuthResponseDto> {
+  public login(@Body() payload: AuthLoginDto): Promise<AuthResponseDto> {
     return this.authService.login(payload);
   }
 
   @Public()
-  @Serialize(AuthResponseDto)
+  @Serialize({
+    serialization: AuthResponseDto,
+  })
   @Post('signup')
-  public signup(@Body() payload: UserCreateDto): Promise<AuthResponseDto> {
+  public signup(@Body() payload: AuthSingupDto): Promise<AuthResponseDto> {
     return this.authService.signup(payload);
   }
 
   @Public()
+  @Serialize({
+    serialization: AuthRefreshResponseDto,
+  })
   @UseGuards(AuthJwtRefreshGuard)
   @Get('refresh-token')
   public refreshTokens(@AuthUser() user: IAuthPayload) {

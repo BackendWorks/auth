@@ -5,6 +5,7 @@ export default registerAs(
   (): Record<string, any> => ({
     name: process.env.APP_NAME ?? 'auth',
     env: process.env.APP_ENV ?? 'development',
+    debug: process.env.APP_DEBUG === 'true' ?? false,
     versioning: {
       enable: process.env.HTTP_VERSIONING_ENABLE === 'true' ?? false,
       prefix: 'v',

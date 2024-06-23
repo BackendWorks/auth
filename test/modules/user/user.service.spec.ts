@@ -1,20 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { PrismaService } from '../../../src/common/services/prisma.service';
+import { AuthSingupDto } from '../../../src/modules/auth/dtos/auth.signup.dto';
+import { UserUpdateDto } from '../../../src/modules/user/dtos/update.user.dto';
+import { UserResponseDto } from '../../../src/modules/user/dtos/user.response.dto';
 import { UserService } from '../../../src/modules/user/services/user.service';
 
 const prismaServiceMock = {
   user: {
-    create: jest.fn(),
-    update: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
     updateMany: jest.fn(),
-    deleteMany: jest.fn(),
   },
 };
 
 describe('UserService', () => {
   let service: UserService;
-  let prismaService: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,125 +30,204 @@ describe('UserService', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
-    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-    expect(prismaService).toBeDefined();
-  });
-
-  describe('createUser', () => {
-    it('should create a user', async () => {
-      const role = { id: 1, name: 'User' };
-      const userData = {
-        email: 'jane@example.com',
-        password: 'password',
-        firstName: 'Jane',
-        lastName: 'Doe',
-        username: 'janedoe',
-      };
-      const createdUser = { ...userData, id: 2, role };
-      prismaServiceMock.user.create.mockResolvedValue(createdUser);
-
-      const result = await service.createUser(userData as any);
-      expect(prismaService.user.create).toHaveBeenCalledWith({
-        data: expect.anything(),
-      });
-      expect(result).toEqual(createdUser);
-    });
-  });
-
-  describe('updateUser', () => {
-    it('should update a user successfully', async () => {
-      const userId = 1;
-      const userData = {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
-        phone: '1234567890',
-      };
-      const updatedUser = { ...userData, id: userId };
-      prismaServiceMock.user.update.mockResolvedValue(updatedUser);
-
-      const result = await service.updateUser(userId, userData);
-      expect(result).toEqual(updatedUser);
-    });
   });
 
   describe('getUserById', () => {
-    it('should return a user for a given ID', async () => {
+    it('should return a user by ID', async () => {
+      const userId = '1';
       const user = {
-        id: 1,
-        email: 'user@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-      };
+        id: userId,
+        email: 'test@example.com',
+        first_name: 'First',
+        last_name: 'Last',
+        username: 'username',
+        is_deleted: false,
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+        phone: null,
+        avatar: null,
+        role: 'User',
+      } as UserResponseDto;
+
       prismaServiceMock.user.findUnique.mockResolvedValue(user);
 
-      const result = await service.getUserById(1);
+      const result = await service.getUserById(userId);
+
       expect(result).toEqual(user);
       expect(prismaServiceMock.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
+        where: { id: userId },
       });
     });
   });
 
   describe('getUserByEmail', () => {
-    it('should return a user for a given email', async () => {
+    it('should return a user by email', async () => {
+      const email = 'test@example.com';
       const user = {
-        id: 1,
-        email: 'user@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-      };
+        id: '1',
+        email: 'test@example.com',
+        first_name: 'First',
+        last_name: 'Last',
+        username: 'username',
+        is_deleted: false,
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+        phone: null,
+        avatar: null,
+        role: 'User',
+      } as UserResponseDto;
+
       prismaServiceMock.user.findUnique.mockResolvedValue(user);
 
-      const result = await service.getUserByEmail('user@example.com');
+      const result = await service.getUserByEmail(email);
+
       expect(result).toEqual(user);
       expect(prismaServiceMock.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'user@example.com' },
+        where: { email },
+      });
+    });
+  });
+
+  describe('getUserByUserName', () => {
+    it('should return a user by username', async () => {
+      const username = 'username';
+      const user = {
+        id: '1',
+        email: 'test@example.com',
+        first_name: 'First',
+        last_name: 'Last',
+        username: 'username',
+        is_deleted: false,
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+        phone: null,
+        avatar: null,
+        role: 'User',
+      } as UserResponseDto;
+
+      prismaServiceMock.user.findUnique.mockResolvedValue(user);
+
+      const result = await service.getUserByUserName(username);
+
+      expect(result).toEqual(user);
+      expect(prismaServiceMock.user.findUnique).toHaveBeenCalledWith({
+        where: { username },
+      });
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update a user', async () => {
+      const userId = '1';
+      const updateData: UserUpdateDto = {
+        firstName: 'UpdatedFirst',
+        lastName: 'UpdatedLast',
+        email: 'updated@example.com',
+        phone: '1234567890',
+        profilePicture: 'http://example.com/profile.jpg',
+      };
+      const updatedUser = {
+        id: userId,
+        email: updateData.email,
+        first_name: updateData.firstName,
+        last_name: updateData.lastName,
+        username: 'username',
+        is_deleted: false,
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+        phone: updateData.phone,
+        avatar: updateData.profilePicture,
+        role: 'User',
+      } as UserResponseDto;
+
+      prismaServiceMock.user.update.mockResolvedValue(updatedUser);
+
+      const result = await service.updateUser(userId, updateData);
+
+      expect(result).toEqual(updatedUser);
+      expect(prismaServiceMock.user.update).toHaveBeenCalledWith({
+        data: {
+          first_name: updateData.firstName?.trim(),
+          last_name: updateData.lastName?.trim(),
+          email: updateData.email,
+          phone: updateData.phone,
+          avatar: updateData.profilePicture,
+        },
+        where: { id: userId },
+      });
+    });
+  });
+
+  describe('createUser', () => {
+    it('should create a new user', async () => {
+      const signupData: AuthSingupDto = {
+        email: 'newuser@example.com',
+        firstName: 'NewFirst',
+        lastName: 'NewLast',
+        password: 'password',
+        username: 'newusername',
+      };
+      const createdUser = {
+        id: '1',
+        email: signupData.email,
+        first_name: signupData.firstName,
+        last_name: signupData.lastName,
+        username: signupData.username,
+        is_deleted: false,
+        is_verified: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+        phone: null,
+        avatar: null,
+        role: 'User',
+      } as UserResponseDto;
+
+      prismaServiceMock.user.create.mockResolvedValue(createdUser);
+
+      const result = await service.createUser(signupData);
+
+      expect(result).toEqual(createdUser);
+      expect(prismaServiceMock.user.create).toHaveBeenCalledWith({
+        data: {
+          email: signupData.email,
+          password: signupData.password,
+          first_name: signupData.firstName.trim(),
+          last_name: signupData.lastName.trim(),
+          role: 'User',
+          username: signupData.username.trim(),
+        },
       });
     });
   });
 
   describe('softDeleteUsers', () => {
-    it('should soft delete users for given IDs', async () => {
-      const userIds = [1, 2, 3];
-      const batchPayload = { count: userIds.length };
-      const successResponse = { status: true, message: expect.any(String) };
-      prismaServiceMock.user.updateMany.mockResolvedValue(batchPayload);
+    it('should soft delete users', async () => {
+      const userIds = ['1', '2', '3'];
 
-      const result = await service.softDeleteUsers(userIds);
-      expect(result).toEqual(successResponse);
+      prismaServiceMock.user.updateMany.mockResolvedValue({
+        count: userIds.length,
+      });
+
+      await service.softDeleteUsers(userIds);
+
       expect(prismaServiceMock.user.updateMany).toHaveBeenCalledWith({
-        where: {
-          id: {
-            in: userIds,
-          },
-        },
+        where: { id: { in: userIds } },
         data: {
           is_deleted: true,
           deleted_at: expect.any(Date),
-        },
-      });
-    });
-  });
-
-  describe('deleteUsers', () => {
-    it('should delete users for given IDs', async () => {
-      const userIds = [1, 2, 3];
-      const batchPayload = { count: userIds.length };
-      const successResponse = { status: true, message: expect.any(String) };
-      prismaServiceMock.user.deleteMany.mockResolvedValue(batchPayload);
-
-      const result = await service.deleteUsers(userIds);
-      expect(result).toEqual(successResponse);
-      expect(prismaServiceMock.user.deleteMany).toHaveBeenCalledWith({
-        where: {
-          id: {
-            in: userIds,
-          },
         },
       });
     });

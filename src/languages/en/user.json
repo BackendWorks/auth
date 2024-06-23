@@ -1,0 +1,7 @@
+{
+  "userExistsByEmail": "An account with email is already exists.",
+  "userExistsByUserName": "An account with username is already exists.",
+  "userNotFound": "User not found.",
+  "invalidPassword": "Password is invalid.",
+  "userDeleted": "User is deleted successfully."
+}

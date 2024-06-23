@@ -1,19 +1,11 @@
-import { Roles } from '@prisma/client';
-
 export interface ITokenResponse {
   accessToken: string;
   refreshToken: string;
 }
 
 export interface IAuthPayload {
-  id: number;
+  id: string;
   role: string;
-  device_token: string;
-}
-
-export interface IGetPermissionFromRolePayload {
-  role: Roles;
-  module: string;
 }
 
 export enum TokenType {

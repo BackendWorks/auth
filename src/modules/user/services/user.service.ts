@@ -1,18 +1,29 @@
 import { Injectable } from '@nestjs/common';
+import { AuthSingupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+
 import { PrismaService } from '../../../common/services/prisma.service';
-import { UpdateUserDto } from '../dtos/update.user.dto';
-import { UserCreateDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { UserResponseDto } from '../dtos/user.response.dto';
-import { GenericResponseDto } from '../dtos/generic.response.dto';
+import { UserUpdateDto } from '../dtos/update.user.dto';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async updateUser(
-    userId: number,
-    data: UpdateUserDto,
-  ): Promise<UserResponseDto> {
+  async getUserById(userId: string): Promise<UserResponseDto> {
+    return this.prismaService.user.findUnique({ where: { id: userId } });
+  }
+
+  async getUserByEmail(email: string): Promise<UserResponseDto> {
+    return this.prismaService.user.findUnique({ where: { email } });
+  }
+
+  async getUserByUserName(userName: string): Promise<UserResponseDto> {
+    return this.prismaService.user.findUnique({
+      where: { username: userName },
+    });
+  }
+
+  async updateUser(userId: string, data: UserUpdateDto) {
     const { firstName, lastName, email, phone, profilePicture } = data;
     return this.prismaService.user.update({
       data: {
@@ -20,7 +31,7 @@ export class UserService {
         last_name: lastName?.trim(),
         email,
         phone,
-        profile_picture: profilePicture,
+        avatar: profilePicture,
       },
       where: {
         id: userId,
@@ -28,7 +39,7 @@ export class UserService {
     });
   }
 
-  async createUser(data: UserCreateDto): Promise<UserResponseDto> {
+  async createUser(data: AuthSingupDto) {
     return this.prismaService.user.create({
       data: {
         email: data?.email,
@@ -41,15 +52,7 @@ export class UserService {
     });
   }
 
-  async getUserById(userId: number): Promise<UserResponseDto> {
-    return this.prismaService.user.findUnique({ where: { id: userId } });
-  }
-
-  async getUserByEmail(email: string): Promise<UserResponseDto> {
-    return this.prismaService.user.findUnique({ where: { email } });
-  }
-
-  async softDeleteUsers(userIds: number[]): Promise<GenericResponseDto> {
+  async softDeleteUsers(userIds: string[]) {
     await this.prismaService.user.updateMany({
       where: {
         id: {
@@ -61,23 +64,6 @@ export class UserService {
         deleted_at: new Date(),
       },
     });
-    return {
-      status: true,
-      message: 'userDeleted',
-    };
-  }
-
-  async deleteUsers(userIds: number[]): Promise<GenericResponseDto> {
-    await this.prismaService.user.deleteMany({
-      where: {
-        id: {
-          in: userIds,
-        },
-      },
-    });
-    return {
-      status: true,
-      message: 'userDeleted',
-    };
+    return;
   }
 }

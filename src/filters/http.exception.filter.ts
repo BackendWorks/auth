@@ -6,14 +6,21 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
 
 @Catch(HttpException)
-export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+  private readonly isDebugEnv: boolean;
 
-  constructor(private readonly i18n: I18nService) {}
+  constructor(
+    private readonly i18n: I18nService,
+    private readonly configService: ConfigService,
+  ) {
+    this.isDebugEnv = this.configService.get('app.debug');
+  }
 
   async catch(exception: unknown, host: ArgumentsHost) {
     const context = host.switchToHttp();
@@ -25,10 +32,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const errorMessageKey =
-      exception instanceof HttpException
-        ? exception.message
-        : 'translation.internalServerError';
-    const message = await this.i18n.t(`translation.${errorMessageKey}`);
+      exception instanceof HttpException ? exception.message : 'error.500';
+
+    const message = await this.i18n.t(`${errorMessageKey}`);
 
     if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(exception);
@@ -36,8 +42,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const errorResponse = {
       statusCode,
-      message,
       timestamp: new Date().toISOString(),
+      message,
+      error: this.isDebugEnv && statusCode === 500 ? exception['stack'] : null,
     };
 
     response.status(statusCode).json(errorResponse);

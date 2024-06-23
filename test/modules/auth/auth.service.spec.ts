@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { HttpException, NotFoundException } from '@nestjs/common';
-import { UserService } from '../../../src/modules/user/services/user.service';
-import { HelperHashService } from '../../../src/modules/auth/services/helper.hash.service';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+
 import { AuthService } from '../../../src/modules/auth/services/auth.service';
+import { UserService } from '../../../src/modules/user/services/user.service';
+import { HelperHashService } from '../../../src/common/services/helper.hash.service';
+import { IAuthPayload } from '../../../src/modules/auth/interfaces/auth.interface';
+import { AuthLoginDto } from '../../../src/modules/auth/dtos/auth.login.dto';
+import { AuthSingupDto } from '../../../src/modules/auth/dtos/auth.signup.dto';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
 
@@ -28,9 +32,7 @@ const configServiceMock = {
 const userServiceMock = {
   getUserByEmail: jest.fn(),
   createUser: jest.fn(),
-  updateUser: jest.fn(),
-  getUserById: jest.fn(),
-  updateUserTwoFaSecret: jest.fn(),
+  getUserByUserName: jest.fn(),
 };
 
 const jwtServiceMock = {
@@ -45,9 +47,6 @@ const helperHashServiceMock = {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userService: UserService;
-  let jwtService: JwtService;
-  let helperHashService: HelperHashService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,125 +72,212 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userService = module.get<UserService>(UserService);
-    jwtService = module.get<JwtService>(JwtService);
-    helperHashService = module.get<HelperHashService>(HelperHashService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-    expect(userService).toBeDefined();
-    expect(jwtService).toBeDefined();
-    expect(helperHashService).toBeDefined();
   });
 
   describe('verifyToken', () => {
-    it('should verify token successfully', async () => {
-      const tokenPayload = { id: 1, role: 'user', device_token: 'deviceToken' };
-      jwtServiceMock.verifyAsync.mockResolvedValue(tokenPayload);
+    it('should verify and return token data', async () => {
+      const token = 'valid-token';
+      const payload: IAuthPayload = { id: '1', role: 'user' };
+      jwtServiceMock.verifyAsync.mockResolvedValue(payload);
 
-      const result = await service.verifyToken('someToken');
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith('someToken', {
+      const result = await service.verifyToken(token);
+
+      expect(result).toEqual(payload);
+      expect(jwtServiceMock.verifyAsync).toHaveBeenCalledWith(token, {
         secret: 'accessTokenSecret',
       });
-      expect(result).toEqual(tokenPayload);
+    });
+
+    it('should throw an error if token verification fails', async () => {
+      const token = 'invalid-token';
+      jwtServiceMock.verifyAsync.mockRejectedValue(new Error('Invalid token'));
+
+      await expect(service.verifyToken(token)).rejects.toThrow('Invalid token');
+    });
+  });
+
+  describe('generateTokens', () => {
+    it('should generate access and refresh tokens', async () => {
+      const user: IAuthPayload = { id: '1', role: 'user' };
+      const accessToken = 'access-token';
+      const refreshToken = 'refresh-token';
+      jwtServiceMock.signAsync.mockImplementation(async (payload, options) => {
+        if (options.secret === 'accessTokenSecret') return accessToken;
+        if (options.secret === 'refreshTokenSecret') return refreshToken;
+      });
+
+      const result = await service.generateTokens(user);
+
+      expect(result).toEqual({ accessToken, refreshToken });
+      expect(jwtServiceMock.signAsync).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw an error if token generation fails', async () => {
+      const user: IAuthPayload = { id: '1', role: 'user' };
+      jwtServiceMock.signAsync.mockRejectedValue(
+        new Error('Token generation failed'),
+      );
+
+      await expect(service.generateTokens(user)).rejects.toThrow(
+        'Token generation failed',
+      );
     });
   });
 
   describe('login', () => {
-    it('should throw NotFoundException if user not found', async () => {
-      userServiceMock.getUserByEmail.mockResolvedValue(null);
-      await expect(
-        service.login({ email: 'test@example.com', password: 'password' }),
-      ).rejects.toThrow(new NotFoundException('userNotFound'));
-    });
-
-    it('should login successfully', async () => {
+    it('should successfully log in a user', async () => {
+      const loginDto: AuthLoginDto = {
+        email: 'test@example.com',
+        password: 'password',
+      };
       const user = {
         id: 1,
         email: 'test@example.com',
         password: 'hashedPassword',
-        device_token: 'deviceToken',
         role: 'user',
       };
       const tokens = {
-        accessToken: 'accessToken',
-        refreshToken: 'refreshToken',
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
       };
       userServiceMock.getUserByEmail.mockResolvedValue(user);
-      helperHashServiceMock.match.mockReturnValue(true);
-      jwtServiceMock.signAsync
-        .mockResolvedValueOnce(tokens.accessToken)
-        .mockResolvedValueOnce(tokens.refreshToken);
+      helperHashServiceMock.match.mockResolvedValue(true);
+      service.generateTokens = jest.fn().mockResolvedValue(tokens);
 
-      const result = await service.login({
-        email: 'test@example.com',
-        password: 'password',
+      const result = await service.login(loginDto);
+
+      expect(result).toEqual({ ...tokens, user });
+      expect(userServiceMock.getUserByEmail).toHaveBeenCalledWith(
+        loginDto.email,
+      );
+      expect(helperHashServiceMock.match).toHaveBeenCalledWith(
+        user.password,
+        loginDto.password,
+      );
+      expect(service.generateTokens).toHaveBeenCalledWith({
+        id: user.id,
+        role: user.role,
       });
-      expect(result).toEqual(expect.objectContaining(tokens));
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      const loginDto: AuthLoginDto = {
+        email: 'notfound@example.com',
+        password: 'password',
+      };
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
+
+      await expect(service.login(loginDto)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException if password does not match', async () => {
+      const loginDto: AuthLoginDto = {
+        email: 'test@example.com',
+        password: 'wrongPassword',
+      };
+      const user = {
+        id: 1,
+        email: 'test@example.com',
+        password: 'hashedPassword',
+        role: 'user',
+      };
+      userServiceMock.getUserByEmail.mockResolvedValue(user);
+      helperHashServiceMock.match.mockResolvedValue(false);
+
+      await expect(service.login(loginDto)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('signup', () => {
-    it('should sign up a new user and return tokens', async () => {
-      const userCreateDto = {
+    it('should successfully sign up a user', async () => {
+      const signupDto: AuthSingupDto = {
         email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        password: 'password123',
-        username: 'testUser',
+        firstName: 'First',
+        lastName: 'Last',
+        password: 'password',
+        username: 'username',
       };
-
-      userServiceMock.getUserByEmail.mockResolvedValue(null);
-
-      helperHashServiceMock.createHash.mockReturnValue('hashedPassword');
-
-      userServiceMock.createUser.mockResolvedValue({
-        ...userCreateDto,
+      const createdUser = {
         id: 1,
-        device_token: 'deviceToken',
-        roles_id: 'roleId',
+        email: signupDto.email,
+        firstName: signupDto.firstName,
+        lastName: signupDto.lastName,
         password: 'hashedPassword',
-      });
+        username: signupDto.username,
+        role: 'user',
+      };
+      const tokens = {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      };
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
+      userServiceMock.getUserByUserName.mockResolvedValue(null);
+      helperHashServiceMock.createHash.mockReturnValue('hashedPassword');
+      userServiceMock.createUser.mockResolvedValue(createdUser);
+      service.generateTokens = jest.fn().mockResolvedValue(tokens);
 
-      jest.spyOn(service, 'generateTokens').mockResolvedValue({
-        accessToken: 'accessToken',
-        refreshToken: 'refreshToken',
-      });
+      const result = await service.signup(signupDto);
 
-      const result = await service.signup(userCreateDto);
-
-      expect(result.user).toBeDefined();
-      expect(result.accessToken).toBeDefined();
-      expect(result.refreshToken).toBeDefined();
-      expect(userService.createUser).toHaveBeenCalledWith({
-        ...userCreateDto,
+      expect(result).toEqual({ ...tokens, user: createdUser });
+      expect(userServiceMock.getUserByEmail).toHaveBeenCalledWith(
+        signupDto.email,
+      );
+      expect(userServiceMock.getUserByUserName).toHaveBeenCalledWith(
+        signupDto.username,
+      );
+      expect(helperHashServiceMock.createHash).toHaveBeenCalledWith(
+        signupDto.password,
+      );
+      expect(userServiceMock.createUser).toHaveBeenCalledWith({
+        email: signupDto.email,
+        firstName: signupDto.firstName.trim(),
+        lastName: signupDto.lastName.trim(),
         password: 'hashedPassword',
+        username: signupDto.username.trim(),
+      });
+      expect(service.generateTokens).toHaveBeenCalledWith({
+        id: createdUser.id,
+        role: createdUser.role,
       });
     });
 
-    it('should throw HttpException when the user already exists', async () => {
-      const userCreateDto = {
+    it('should throw ConflictException if user with email already exists', async () => {
+      const signupDto: AuthSingupDto = {
         email: 'existing@example.com',
-        firstName: 'Existing',
-        lastName: 'User',
-        password: 'password123',
-        username: 'existingUser',
+        firstName: 'First',
+        lastName: 'Last',
+        password: 'password',
+        username: 'username',
       };
+      userServiceMock.getUserByEmail.mockResolvedValue({ id: 1 });
 
-      userServiceMock.getUserByEmail.mockResolvedValue({
-        id: 1,
-        email: 'existing@example.com',
-      });
+      const responsePromise = service.signup(signupDto);
 
-      await expect(service.signup(userCreateDto)).rejects.toThrow(
-        HttpException,
+      await expect(responsePromise).rejects.toThrow(ConflictException);
+      await expect(responsePromise).rejects.toThrow('user.userExistsByEmail');
+    });
+
+    it('should throw ConflictException if user with username already exists', async () => {
+      const signupDto: AuthSingupDto = {
+        email: 'test@example.com',
+        firstName: 'First',
+        lastName: 'Last',
+        password: 'password',
+        username: 'existingUsername',
+      };
+      userServiceMock.getUserByEmail.mockResolvedValue(null);
+      userServiceMock.getUserByUserName.mockResolvedValue({ id: 1 });
+
+      const responsePromise = service.signup(signupDto);
+
+      await expect(responsePromise).rejects.toThrow(ConflictException);
+      await expect(responsePromise).rejects.toThrow(
+        'user.userExistsByUserName',
       );
-      expect(userService.getUserByEmail).toHaveBeenCalledWith(
-        userCreateDto.email,
-      );
-      jest.clearAllMocks();
-      expect(userService.createUser).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
 import { JwtModule } from '@nestjs/jwt';
-import { PrismaService } from '../../common/services/prisma.service';
-import { AuthController } from './controllers/auth.controller';
-import { HelperHashService } from './services/helper.hash.service';
 import { UserService } from 'src/modules/user/services/user.service';
 import { PassportModule } from '@nestjs/passport';
-import { AuthJwtAccessStrategy } from 'src/strategies/jwt.access.strategy';
-import { AuthJwtRefreshStrategy } from 'src/strategies/jwt.refresh.strategy';
+import { AuthJwtAccessStrategy } from 'src/modules/auth/strategies/jwt.access.strategy';
+import { AuthJwtRefreshStrategy } from 'src/modules/auth/strategies/jwt.refresh.strategy';
+import { CommonModule } from 'src/common/common.module';
+
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './services/auth.service';
 
 @Module({
   imports: [
+    CommonModule,
     PassportModule.register({
       session: false,
     }),
@@ -21,10 +22,8 @@ import { AuthJwtRefreshStrategy } from 'src/strategies/jwt.refresh.strategy';
     AuthJwtAccessStrategy,
     AuthJwtRefreshStrategy,
     AuthService,
-    HelperHashService,
     UserService,
-    PrismaService,
   ],
-  exports: [AuthService, HelperHashService],
+  exports: [AuthService],
 })
 export class AuthModule {}
