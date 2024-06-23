@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PrismaService } from '../../../src/common/services/prisma.service';
-import { AuthSingupDto } from '../../../src/modules/auth/dtos/auth.signup.dto';
-import { UserUpdateDto } from '../../../src/modules/user/dtos/update.user.dto';
-import { UserResponseDto } from '../../../src/modules/user/dtos/user.response.dto';
-import { UserService } from '../../../src/modules/user/services/user.service';
+import { PrismaService } from '../../src/common/services/prisma.service';
+import { AuthSingupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
+import { UserUpdateDto } from '../../src/modules/user/dtos/update.user.dto';
+import { UserResponseDto } from '../../src/modules/user/dtos/user.response.dto';
+import { UserService } from '../../src/modules/user/services/user.service';
 
 const prismaServiceMock = {
   user: {
@@ -134,7 +134,7 @@ describe('UserService', () => {
         lastName: 'UpdatedLast',
         email: 'updated@example.com',
         phone: '1234567890',
-        profilePicture: 'http://example.com/profile.jpg',
+        avatar: 'http://example.com/profile.jpg',
       };
       const updatedUser = {
         id: userId,
@@ -148,7 +148,7 @@ describe('UserService', () => {
         updated_at: new Date(),
         deleted_at: null,
         phone: updateData.phone,
-        avatar: updateData.profilePicture,
+        avatar: updateData.avatar,
         role: 'User',
       } as UserResponseDto;
 
@@ -163,7 +163,7 @@ describe('UserService', () => {
           last_name: updateData.lastName?.trim(),
           email: updateData.email,
           phone: updateData.phone,
-          avatar: updateData.profilePicture,
+          avatar: updateData.avatar,
         },
         where: { id: userId },
       });

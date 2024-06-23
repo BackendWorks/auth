@@ -24,14 +24,14 @@ export class UserService {
   }
 
   async updateUser(userId: string, data: UserUpdateDto) {
-    const { firstName, lastName, email, phone, profilePicture } = data;
+    const { firstName, lastName, email, phone, avatar } = data;
     return this.prismaService.user.update({
       data: {
         first_name: firstName?.trim(),
         last_name: lastName?.trim(),
         email,
         phone,
-        avatar: profilePicture,
+        avatar,
       },
       where: {
         id: userId,

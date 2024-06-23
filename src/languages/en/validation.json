@@ -1,0 +1,23 @@
+{
+  "email": {
+    "isString": "email must be a string",
+    "isNotEmpty": "email not provided",
+    "isEmail": "email should be valid"
+  },
+  "password": {
+    "isString": "password must be a string",
+    "isNotEmpty": "password not provided"
+  },
+  "firstName": {
+    "isString": "firstName must be a string"
+  },
+  "lastName": {
+    "isString": "lastName must be a string"
+  },
+  "username": {
+    "isString": "username must be a string"
+  },
+  "phone": {
+    "matches": "Invalid phone number format"
+  }
+}

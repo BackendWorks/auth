@@ -2,8 +2,9 @@
   "200": "OK",
   "201": "Created",
   "202": "Accepted",
-  "203": "NonAuthoritativeInfo",
-  "204": "NoContent",
-  "205": "ResetContent",
-  "206": "PartialContent"
+  "203": "Non Authoritative Info",
+  "204": "No Content",
+  "205": "Reset Content",
+  "206": "Partial Content",
+  "500": "Internal Server Error"
 }
