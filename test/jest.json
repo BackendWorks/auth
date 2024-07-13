@@ -3,7 +3,7 @@
   "rootDir": "../",
   "modulePaths": ["."],
   "testEnvironment": "node",
-  "testMatch": ["<rootDir>/test/**/*.spec.ts"],
+  "testMatch": ["<rootDir>/test/*.spec.ts"],
   "collectCoverage": true,
   "coverageDirectory": "coverage",
   "collectCoverageFrom": [

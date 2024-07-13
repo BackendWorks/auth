@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
-import { AuthService } from '../../src/modules/auth/services/auth.service';
-import { UserService } from '../../src/modules/user/services/user.service';
-import { HelperHashService } from '../../src/common/services/helper.hash.service';
-import { IAuthPayload } from '../../src/modules/auth/interfaces/auth.interface';
-import { AuthLoginDto } from '../../src/modules/auth/dtos/auth.login.dto';
-import { AuthSignupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
+import { AuthService } from '../src/modules/auth/services/auth.service';
+import { UserService } from '../src/modules/user/services/user.service';
+import { HelperHashService } from '../src/common/services/helper.hash.service';
+import { IAuthPayload } from '../src/modules/auth/interfaces/auth.interface';
+import { AuthLoginDto } from '../src/modules/auth/dtos/auth.login.dto';
+import { AuthSignupDto } from '../src/modules/auth/dtos/auth.signup.dto';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
 
