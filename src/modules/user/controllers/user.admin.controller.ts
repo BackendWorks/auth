@@ -1,8 +1,7 @@
 import { Controller, Delete, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
-import { AllowedRoles } from 'src/decorators/roles.decorator';
 import { Roles } from '@prisma/client';
-import { Serialize } from 'src/decorators/serialize.decorator';
+import { AllowedRoles } from 'src/decorators/role.decorator';
 
 import { UserService } from '../services/user.service';
 
@@ -19,7 +18,6 @@ export class AdminUserController {
     name: 'id',
     type: 'string',
   })
-  @Serialize({ message: 'user.userDeleted' })
   @Delete(':id')
   @AllowedRoles([Roles.Admin])
   deleteUser(@Param('id') id: string): Promise<void> {

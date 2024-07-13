@@ -8,7 +8,7 @@ export class UserUpdateDto {
     example: faker.internet.email(),
     required: false,
   })
-  @IsEmail({}, { message: 'validation.email.isEmail' })
+  @IsEmail({}, { message: 'Enter valid email address' })
   @IsOptional()
   public email?: string;
 
@@ -18,7 +18,7 @@ export class UserUpdateDto {
     required: false,
   })
   @IsString()
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'validation.phone.matches' })
+  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Phone number must be valid' })
   @IsOptional()
   public phone?: string;
 

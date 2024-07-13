@@ -1,21 +1,23 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class AuthLoginDto {
   @ApiProperty({
     example: faker.internet.email(),
     description: 'The email address of the user',
   })
-  @IsString({ message: 'email must be a string' })
-  @IsNotEmpty({ message: 'email not provided' })
+  @IsEmail({}, { message: 'Please enter a valid email address' })
+  @IsString({ message: 'Email must be a valid string' })
+  @IsNotEmpty({ message: 'Email is required' })
   public email: string;
 
   @ApiProperty({
     example: faker.internet.password(),
     description: 'The password of the user',
   })
-  @IsString({ message: 'password must be a string' })
-  @IsNotEmpty({ message: 'password not provided' })
+  @IsString({ message: 'Password must be a valid string' })
+  @IsNotEmpty({ message: 'Password is required' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
   public password: string;
 }

@@ -16,7 +16,7 @@ import { HelperHashService } from '../../../common/services/helper.hash.service'
 import { IAuthService } from '../interfaces/auth.service.interface';
 import { AuthResponseDto } from '../dtos/auth.response.dto';
 import { AuthLoginDto } from '../dtos/auth.login.dto';
-import { AuthSingupDto } from '../dtos/auth.signup.dto';
+import { AuthSignupDto } from '../dtos/auth.signup.dto';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -128,7 +128,7 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async signup(data: AuthSingupDto): Promise<AuthResponseDto> {
+  async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
     try {
       const { email, firstName, lastName, password, username } = data;
       const findByEmail = await this.userService.getUserByEmail(email);

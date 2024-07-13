@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../../src/common/services/prisma.service';
-import { AuthSingupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
-import { UserUpdateDto } from '../../src/modules/user/dtos/update.user.dto';
+import { AuthSignupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
+import { UserUpdateDto } from '../../src/modules/user/dtos/user.update.dto';
 import { UserResponseDto } from '../../src/modules/user/dtos/user.response.dto';
 import { UserService } from '../../src/modules/user/services/user.service';
 
@@ -172,7 +172,7 @@ describe('UserService', () => {
 
   describe('createUser', () => {
     it('should create a new user', async () => {
-      const signupData: AuthSingupDto = {
+      const signupData: AuthSignupDto = {
         email: 'newuser@example.com',
         firstName: 'NewFirst',
         lastName: 'NewLast',

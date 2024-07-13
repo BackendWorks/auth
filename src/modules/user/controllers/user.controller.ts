@@ -4,13 +4,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
 import { TransformMessagePayload } from 'src/decorators/payload.decorator';
 import { AuthUser } from 'src/decorators/auth.decorator';
-import { AllowedRoles } from 'src/decorators/roles.decorator';
+import { AllowedRoles } from 'src/decorators/role.decorator';
 import { Roles } from '@prisma/client';
-import { Serialize } from 'src/decorators/serialize.decorator';
 
 import { UserResponseDto } from '../dtos/user.response.dto';
 import { UserService } from '../services/user.service';
-import { UserUpdateDto } from '../dtos/update.user.dto';
+import { UserUpdateDto } from '../dtos/user.update.dto';
 
 @ApiTags('user.user')
 @Controller({
@@ -22,28 +21,27 @@ export class UserController {
 
   @MessagePattern('getUserById')
   public async getUserById(
-    @TransformMessagePayload() payload: Record<string, any>,
+    @TransformMessagePayload() payload: Record<string, string>,
   ) {
     return this.userService.getUserById(payload.userId);
   }
 
   @MessagePattern('getUserByEmail')
   public async getUserByEmail(
-    @TransformMessagePayload() payload: Record<string, any>,
+    @TransformMessagePayload() payload: Record<string, string>,
   ) {
     return this.userService.getUserByEmail(payload.userName);
   }
 
   @MessagePattern('getUserByUserName')
   public async getUserByUserName(
-    @TransformMessagePayload() payload: Record<string, any>,
+    @TransformMessagePayload() payload: Record<string, string>,
   ) {
     return this.userService.getUserByUserName(payload.userName);
   }
 
   @ApiBearerAuth('accessToken')
   @Put()
-  @Serialize({ serialization: UserResponseDto })
   @AllowedRoles([Roles.User, Roles.Admin])
   updateUser(
     @AuthUser() user: IAuthPayload,
@@ -54,7 +52,6 @@ export class UserController {
 
   @ApiBearerAuth('accessToken')
   @Get('profile')
-  @Serialize({ serialization: UserResponseDto })
   @AllowedRoles([Roles.User, Roles.Admin])
   getUserInfo(@AuthUser() user: IAuthPayload): Promise<UserResponseDto> {
     return this.userService.getUserById(user.id);

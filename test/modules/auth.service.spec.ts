@@ -8,7 +8,7 @@ import { UserService } from '../../src/modules/user/services/user.service';
 import { HelperHashService } from '../../src/common/services/helper.hash.service';
 import { IAuthPayload } from '../../src/modules/auth/interfaces/auth.interface';
 import { AuthLoginDto } from '../../src/modules/auth/dtos/auth.login.dto';
-import { AuthSingupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupDto } from '../../src/modules/auth/dtos/auth.signup.dto';
 
 jest.mock('nanoid', () => ({ nanoid: jest.fn(() => 'randomSecret') }));
 
@@ -194,7 +194,7 @@ describe('AuthService', () => {
 
   describe('signup', () => {
     it('should successfully sign up a user', async () => {
-      const signupDto: AuthSingupDto = {
+      const signupDto: AuthSignupDto = {
         email: 'test@example.com',
         firstName: 'First',
         lastName: 'Last',
@@ -246,7 +246,7 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException if user with email already exists', async () => {
-      const signupDto: AuthSingupDto = {
+      const signupDto: AuthSignupDto = {
         email: 'existing@example.com',
         firstName: 'First',
         lastName: 'Last',
@@ -262,7 +262,7 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException if user with username already exists', async () => {
-      const signupDto: AuthSingupDto = {
+      const signupDto: AuthSignupDto = {
         email: 'test@example.com',
         firstName: 'First',
         lastName: 'Last',

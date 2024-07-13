@@ -4,17 +4,13 @@ import { ApiTags } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
 import { TransformMessagePayload } from 'src/decorators/payload.decorator';
 import { AuthUser } from 'src/decorators/auth.decorator';
-import { Serialize } from 'src/decorators/serialize.decorator';
 
-import {
-  AuthRefreshResponseDto,
-  AuthResponseDto,
-} from '../dtos/auth.response.dto';
+import { AuthResponseDto } from '../dtos/auth.response.dto';
 import { AuthJwtRefreshGuard } from '../../../guards/jwt.refresh.guard';
 import { IAuthPayload } from '../interfaces/auth.interface';
 import { AuthService } from '../services/auth.service';
 import { AuthLoginDto } from '../dtos/auth.login.dto';
-import { AuthSingupDto } from '../dtos/auth.signup.dto';
+import { AuthSignupDto } from '../dtos/auth.signup.dto';
 
 @ApiTags('auth')
 @Controller({
@@ -26,31 +22,24 @@ export class AuthController {
 
   @MessagePattern('validateToken')
   public async getUserByAccessToken(
-    @TransformMessagePayload() payload: Record<string, any>,
+    @TransformMessagePayload() payload: Record<string, string>,
   ) {
     return this.authService.verifyToken(payload.token);
   }
 
   @Public()
-  @Serialize({ serialization: AuthResponseDto })
   @Post('login')
   public login(@Body() payload: AuthLoginDto): Promise<AuthResponseDto> {
     return this.authService.login(payload);
   }
 
   @Public()
-  @Serialize({
-    serialization: AuthResponseDto,
-  })
   @Post('signup')
-  public signup(@Body() payload: AuthSingupDto): Promise<AuthResponseDto> {
+  public signup(@Body() payload: AuthSignupDto): Promise<AuthResponseDto> {
     return this.authService.signup(payload);
   }
 
   @Public()
-  @Serialize({
-    serialization: AuthRefreshResponseDto,
-  })
   @UseGuards(AuthJwtRefreshGuard)
   @Get('refresh-token')
   public refreshTokens(@AuthUser() user: IAuthPayload) {

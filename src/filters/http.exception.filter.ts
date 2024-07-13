@@ -1,6 +1,5 @@
 import {
   ArgumentsHost,
-  BadRequestException,
   Catch,
   ExceptionFilter,
   HttpException,
@@ -19,7 +18,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
   async catch(exception: unknown, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
-    const request = context.getRequest<Request>();
 
     const statusCode =
       exception instanceof HttpException
@@ -29,32 +27,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const translationKey =
       exception instanceof HttpException && exception.message
         ? exception.message
-        : 'response.500';
+        : 'error.500';
 
-    const message = await this.i18n.t(translationKey, {
-      lang: request.headers['accept-language'] || 'en',
-    });
-
-    let error = {};
-
-    if (exception instanceof BadRequestException) {
-      const response = exception.getResponse();
-      error = await Promise.all(
-        response['message'].map((msg: string) => this.i18n.t(msg)),
-      );
-    }
+    const message = await this.i18n.t(translationKey);
 
     const errorResponse = {
       statusCode,
       timestamp: new Date().toISOString(),
       message,
-      error,
     };
 
-    let errorDetails: Record<string, unknown>;
-
     if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
-      errorDetails = {
+      const errorDetails = {
         ...errorResponse,
         stack: exception instanceof Error ? exception.stack : undefined,
       };

@@ -28,7 +28,7 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:$NODE_ENV
       - echo Writing image definitions file...
-      - printf '[{"name":"auth","imageUri":"%s"}]' "$REPOSITORY_URI:$NODE_ENV" > imagedefinitions.json
+      - printf '[{"name":"backendworks-auth","imageUri":"%s"}]' "$REPOSITORY_URI:$NODE_ENV" > imagedefinitions.json
       - cat imagedefinitions.json
 artifacts:
   files:
