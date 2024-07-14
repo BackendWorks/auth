@@ -9,7 +9,7 @@ export class AuthJwtAccessGuard extends AuthGuard('jwt-access') {
     super();
   }
 
-  handleRequest<TUser = any | boolean>(
+  handleRequest<TUser = unknown | boolean>(
     err: Error,
     user: TUser,
     _info: Error,

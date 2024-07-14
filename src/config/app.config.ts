@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 
 export default registerAs(
   'app',
-  (): Record<string, any> => ({
+  (): Record<string, unknown> => ({
     name: process.env.APP_NAME ?? 'auth',
     env: process.env.APP_ENV ?? 'development',
     versioning: {

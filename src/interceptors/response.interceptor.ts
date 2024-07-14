@@ -20,7 +20,7 @@ export class ResponseInterceptor implements NestInterceptor {
     const response = ctx.getResponse();
     const statusCode: number = response.statusCode;
     const responseBody = await firstValueFrom(next.handle());
-    const message = await this.i18n.t(`response.${statusCode}`);
+    const message = await this.i18n.t(`success.${statusCode}`);
 
     return of({
       statusCode,

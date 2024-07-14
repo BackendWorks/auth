@@ -7,7 +7,7 @@ export class AuthJwtRefreshGuard extends AuthGuard('jwt-refresh') {
     super();
   }
 
-  handleRequest<TUser = any | boolean>(
+  handleRequest<TUser = unknown | boolean>(
     err: Error,
     user: TUser,
     _info: Error,
