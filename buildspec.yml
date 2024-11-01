@@ -1,4 +1,3 @@
-# Don't change this version, this version is buildspec.yml file's version
 version: 0.2
 
 phases:
@@ -8,9 +7,7 @@ phases:
       - aws --version
       - aws ecr get-login-password --region <REGION> | docker login --username AWS --password-stdin <URI>
       - REPOSITORY_URI=<URI>
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo Building image using env $NODE_ENV
+      - IMAGE_TAG=$NODE_ENV-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
 
   build:
     commands:
@@ -18,7 +15,6 @@ phases:
       - echo Building the Docker image...
       - docker build -f Dockerfile -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$NODE_ENV
 
   post_build:
     commands:
@@ -26,10 +22,10 @@ phases:
       - echo Pushing the Docker images...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - docker push $REPOSITORY_URI:$NODE_ENV
       - echo Writing image definitions file...
-      - printf '[{"name":"backendworks-auth","imageUri":"%s"}]' "$REPOSITORY_URI:$NODE_ENV" > imagedefinitions.json
+      - printf '[{"name":"backendworks-auth","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
       - cat imagedefinitions.json
+
 artifacts:
   files:
     - 'imagedefinitions.json'

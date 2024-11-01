@@ -1,16 +1,12 @@
 {
   "singleQuote": true,
   "trailingComma": "all",
+  "semi": true,
+  "printWidth": 100,
+  "tabWidth": 4,
   "useTabs": false,
-  "tabWidth": 2,
-  "overrides": [
-    {
-      "files": "*.yml",
-      "options": {
-        "tadWidth": 2,
-        "printWidth": 40,
-        "singleQuote": true
-      }
-    }
-  ]
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "avoid",
+  "endOfLine": "lf"
 }
