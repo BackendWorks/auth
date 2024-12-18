@@ -21,7 +21,7 @@ model User {
   avatar          String?   @map("avatar")
   isEmailVerified Boolean   @default(false) @map("is_email_verified")
   isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
-  verification    String    @unique
+  verification    String?    @unique
   phoneNumber     String?   @map("phone_number")
   role            Role
   createdAt       DateTime  @default(now()) @map("created_at")
