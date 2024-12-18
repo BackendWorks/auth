@@ -8,8 +8,8 @@
     },
     "scripts": {
         "prebuild": "rimraf dist",
-        "build": "nest build && mkdir -p dist/common/templates && cp -R src/common/templates/* dist/common/templates",
-        "build:prod": "nest build && cp -R src/common/templates dist/common/templates",
+        "build": "nest build && copyfiles -u 1 'src/common/templates/**/*' dist/common/templates/",
+        "build:prod": "nest build && copyfiles -u 1 'src/common/templates/**/*' dist/common/templates/",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "node dist/main",
         "dev": "nest start --watch",
@@ -39,6 +39,7 @@
         "bcrypt": "^5.1.1",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.1",
+        "copyfiles": "^2.4.1",
         "dotenv": "^16.4.5",
         "express": "^4.21.1",
         "handlebars": "^4.7.8",
