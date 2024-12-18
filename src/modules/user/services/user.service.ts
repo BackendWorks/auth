@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from 'src/common/services/prisma.service';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class UserService {
@@ -34,13 +35,13 @@ export class UserService {
         });
     }
 
-    async createUser(data: AuthSignupDto) {
+    async createUserByEmail(data: AuthSignupByEmailDto) {
         return this.prismaService.user.create({
             data: {
                 email: data?.email,
                 password: data?.password,
                 firstName: data?.firstName.trim(),
-                lastName: data?.lastName.trim(),
+                verification: v4(),
                 role: 'USER',
             },
         });

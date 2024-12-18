@@ -29,3 +29,19 @@ export class AuthResponseDto extends AuthRefreshResponseDto {
     @ValidateNested()
     user: UserResponseDto;
 }
+
+export class SignUpByEmailResponseDto {
+    @ApiProperty({
+        description: 'The user details',
+        type: UserResponseDto,
+    })
+    @Type(() => UserResponseDto)
+    @ValidateNested()
+    user: UserResponseDto;
+
+    @ApiProperty({
+        description: 'A message indicating the status of the operation',
+        example: 'User successfully registered. Verification link already sent.',
+    })
+    message: string;
+}

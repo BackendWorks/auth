@@ -1,9 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from 'src/common/services/prisma.service';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
 import { UserService } from 'src/modules/user/services/user.service';
+
+jest.mock('uuid', () => ({
+    v4: jest.fn(() => 'mock-verification-token'), // Mock verification token
+}));
 
 describe('UserService', () => {
     let service: UserService;
@@ -44,7 +48,10 @@ describe('UserService', () => {
                 email: 'test@example.com',
                 firstName: 'John',
                 lastName: 'Doe',
-                isVerified: true,
+                patronymic: 'Junior',
+                verification: '04aeb7da-e968-4552-b6c9-ef9897010060',
+                isEmailVerified: false,
+                isPhoneVerified: false,
                 role: 'USER',
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -84,7 +91,10 @@ describe('UserService', () => {
                 email: 'test@example.com',
                 firstName: 'John',
                 lastName: 'Doe',
-                isVerified: true,
+                patronymic: 'Junior',
+                verification: '04aeb7da-e968-4552-b6c9-ef9897010060',
+                isEmailVerified: false,
+                isPhoneVerified: false,
                 role: 'USER',
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -151,35 +161,36 @@ describe('UserService', () => {
         });
     });
 
-    describe('createUser', () => {
+    describe('createUserByEmail', () => {
         it('should create a new user', async () => {
-            const signupData: AuthSignupDto = {
+            const signupData: AuthSignupByEmailDto = {
                 email: 'new@example.com',
                 password: 'password123',
                 firstName: 'New',
-                lastName: 'User',
-                username: 'newuser',
             };
 
             const createdUser = {
                 id: '123',
-                email: signupData.email,
-                password: signupData.password,
-                firstName: signupData.firstName,
-                lastName: signupData.lastName,
+                email: 'test@example.com',
+                firstName: 'John',
+                lastName: 'Doe',
+                patronymic: 'Junior',
+                verification: 'mock-verification-token',
+                isEmailVerified: false,
+                isPhoneVerified: false,
                 role: 'USER',
-                isVerified: false,
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 deletedAt: null,
                 isDeleted: false,
                 phone: null,
                 avatar: null,
+                password: 'hashed_password',
             };
 
             prismaServiceMock.user.create.mockResolvedValue(createdUser);
 
-            const result = await service.createUser(signupData);
+            const result = await service.createUserByEmail(signupData);
 
             expect(result).toEqual(createdUser);
             expect(prismaService.user.create).toHaveBeenCalledWith({
@@ -187,8 +198,8 @@ describe('UserService', () => {
                     email: signupData.email,
                     password: signupData.password,
                     firstName: signupData.firstName.trim(),
-                    lastName: signupData.lastName.trim(),
                     role: 'USER',
+                    verification: 'mock-verification-token',
                 },
             });
         });

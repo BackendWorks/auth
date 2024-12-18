@@ -6,14 +6,16 @@ import { HashService } from 'src/common/services/hash.service';
 import { UserService } from 'src/modules/user/services/user.service';
 
 import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
-import { AuthResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthResponseDto, SignUpByEmailResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
+import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import {
     IAuthPayload,
     ITokenResponse,
     TokenType,
 } from 'src/modules/auth/interfaces/auth.interface';
 import { IAuthService } from 'src/modules/auth/interfaces/auth.service.interface';
+import { I18nService } from 'nestjs-i18n';
+import { MailService } from 'src/common/services/mail.service';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -27,6 +29,8 @@ export class AuthService implements IAuthService {
         private readonly jwtService: JwtService,
         private readonly userService: UserService,
         private readonly hashService: HashService,
+        private readonly i18n: I18nService,
+        private readonly mailService: MailService,
     ) {
         this.accessTokenSecret = this.configService.get<string>('auth.accessToken.secret');
         this.refreshTokenSecret = this.configService.get<string>('auth.refreshToken.secret');
@@ -113,9 +117,9 @@ export class AuthService implements IAuthService {
         }
     }
 
-    async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
+    async signupByEmail(data: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
         try {
-            const { email, firstName, lastName, password } = data;
+            const { email, firstName, password } = data;
             const findByEmail = await this.userService.getUserByEmail(email);
 
             if (findByEmail) {
@@ -124,21 +128,19 @@ export class AuthService implements IAuthService {
 
             const passwordHashed = this.hashService.createHash(password);
 
-            const createdUser = await this.userService.createUser({
+            const createdUser = await this.userService.createUserByEmail({
                 email,
                 firstName: firstName?.trim(),
-                lastName: lastName?.trim(),
                 password: passwordHashed,
             });
 
-            const tokens = await this.generateTokens({
-                id: createdUser.id,
-                role: createdUser.role,
-            });
+            await this.mailService.sendUserConfirmation(email, createdUser.verification);
+
+            const message = this.i18n.t('success.signupSuccess');
 
             return {
-                ...tokens,
                 user: createdUser,
+                message,
             };
         } catch (e) {
             throw e;

@@ -16,6 +16,7 @@ import { AuthJwtAccessStrategy } from './providers/jwt.access.strategy';
 import { AuthJwtRefreshStrategy } from './providers/jwt.refresh.strategy';
 import { HashService } from './services/hash.service';
 import { PrismaService } from './services/prisma.service';
+import { MailService } from './services/mail.service';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { PrismaService } from './services/prisma.service';
     providers: [
         PrismaService,
         HashService,
+        MailService,
         AuthJwtAccessStrategy,
         AuthJwtRefreshStrategy,
         {
@@ -58,7 +60,13 @@ import { PrismaService } from './services/prisma.service';
             useClass: RolesGuard,
         },
     ],
-    exports: [PrismaService, HashService, AuthJwtAccessStrategy, AuthJwtRefreshStrategy],
+    exports: [
+        PrismaService,
+        HashService,
+        AuthJwtAccessStrategy,
+        AuthJwtRefreshStrategy,
+        MailService,
+    ],
 })
 export class CommonModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
