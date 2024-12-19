@@ -6,17 +6,21 @@ import { User } from '@prisma/client';
 
 import { HashService } from 'src/common/services/hash.service';
 import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { UserService } from 'src/modules/user/services/user.service';
+import { MailService } from '../src/common/services/mail.service';
+import { I18nService } from 'nestjs-i18n';
 
 describe('AuthService', () => {
     let authService: AuthService;
     let jwtService: JwtService;
     let userService: UserService;
     let hashService: HashService;
+    let mailService: MailService;
+    let i18nService: I18nService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -44,9 +48,26 @@ describe('AuthService', () => {
                 { provide: JwtService, useValue: { signAsync: jest.fn(), verifyAsync: jest.fn() } },
                 {
                     provide: UserService,
-                    useValue: { getUserByEmail: jest.fn(), createUser: jest.fn() },
+                    useValue: { getUserByEmail: jest.fn(), createUserByEmail: jest.fn() },
                 },
                 { provide: HashService, useValue: { match: jest.fn(), createHash: jest.fn() } },
+                {
+                    provide: MailService,
+                    useValue: {
+                        sendUserConfirmation: jest.fn(),
+                    },
+                },
+                {
+                    provide: I18nService,
+                    useValue: {
+                        t: jest.fn().mockImplementation((key: string) => {
+                            const translations = {
+                                'success.signupSuccess': 'User successfully registered',
+                            };
+                            return translations[key] || key;
+                        }),
+                    },
+                },
             ],
         }).compile();
 
@@ -54,6 +75,8 @@ describe('AuthService', () => {
         jwtService = module.get<JwtService>(JwtService);
         userService = module.get<UserService>(UserService);
         hashService = module.get<HashService>(HashService);
+        mailService = module.get<MailService>(MailService);
+        i18nService = module.get<I18nService>(I18nService);
     });
 
     describe('verifyToken', () => {
@@ -165,10 +188,9 @@ describe('AuthService', () => {
 
     describe('signup', () => {
         it('should throw ConflictException if email is already used', async () => {
-            const signupDto: AuthSignupDto = {
+            const signupDto: AuthSignupByEmailDto = {
                 email: 'test@example.com',
                 firstName: 'Test',
-                lastName: 'User',
                 password: 'password',
             };
 
@@ -176,32 +198,31 @@ describe('AuthService', () => {
                 id: 'user1',
             } as UserResponseDto);
 
-            await expect(authService.signup(signupDto)).rejects.toThrow(ConflictException);
+            await expect(authService.signupByEmail(signupDto)).rejects.toThrow(ConflictException);
         });
 
-        it('should create a new user and return tokens and user data', async () => {
-            const signupDto: AuthSignupDto = {
+        it('should create a new user and return user data', async () => {
+            const signupDto: AuthSignupByEmailDto = {
                 email: 'test@example.com',
                 firstName: 'Test',
-                lastName: 'User',
                 password: 'password',
             };
             const mockUser = { id: 'user1', email: 'test@example.com', role: 'USER' } as User;
-            const accessToken = 'accessToken';
-            const refreshToken = 'refreshToken';
             const hashedPassword = 'hashedPassword';
 
             jest.spyOn(userService, 'getUserByEmail').mockResolvedValue(null);
             jest.spyOn(hashService, 'createHash').mockReturnValue(hashedPassword);
-            jest.spyOn(userService, 'createUser').mockResolvedValue(mockUser);
-            jest.spyOn(authService, 'generateTokens').mockResolvedValue({
-                accessToken,
-                refreshToken,
-            });
+            jest.spyOn(userService, 'createUserByEmail').mockResolvedValue(mockUser);
+            jest.spyOn(mailService, 'sendUserConfirmation').mockResolvedValue(undefined);
 
-            const result = await authService.signup(signupDto);
+            const result = await authService.signupByEmail(signupDto);
 
-            expect(result).toEqual({ accessToken, refreshToken, user: mockUser });
+            expect(result).toEqual({ message: 'User successfully registered', user: mockUser });
+            expect(i18nService.t).toHaveBeenCalledWith('success.signupSuccess');
+            expect(mailService.sendUserConfirmation).toHaveBeenCalledWith(
+                signupDto.email,
+                mockUser.verification,
+            );
         });
     });
 });

@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-export class AuthSignupDto {
+export class AuthSignupByEmailDto {
     @ApiProperty({
         example: faker.internet.email(),
         description: 'The email address of the user',
@@ -26,22 +26,5 @@ export class AuthSignupDto {
         description: 'The first name of the user',
     })
     @IsString()
-    @IsOptional()
-    public firstName?: string;
-
-    @ApiProperty({
-        example: faker.person.lastName(),
-        description: 'The last name of the user',
-    })
-    @IsString()
-    @IsOptional()
-    public lastName?: string;
-
-    @ApiProperty({
-        example: faker.internet.username(),
-        description: 'The username of the user',
-    })
-    @IsString()
-    @IsOptional()
-    public username?: string;
+    public firstName: string;
 }

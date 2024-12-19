@@ -3,5 +3,6 @@
   "userExistsByUserName": "An account with this username already exists.",
   "userNotFound": "User not found.",
   "invalidPassword": "The provided password is invalid.",
-  "userDeleted": "User has been successfully deleted."
+  "userDeleted": "User has been successfully deleted.",
+  "signupSuccess": "User successfully registered. Verification link already sent."
 }

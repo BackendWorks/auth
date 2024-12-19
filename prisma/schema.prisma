@@ -12,18 +12,21 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(uuid()) @map("id")
-  email       String    @unique @map("email")
-  password    String?   @map("password")
-  firstName   String?   @map("first_name")
-  lastName    String?   @map("last_name")
-  avatar      String?   @map("avatar")
-  isVerified  Boolean   @default(false) @map("is_verified")
-  phoneNumber String?   @map("phone_number")
-  role        Role
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id              String    @id @default(uuid()) @map("id")
+  email           String    @unique @map("email")
+  password        String?   @map("password")
+  firstName        String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  patronymic      String?   @map("patronymic")
+  avatar          String?   @map("avatar")
+  isEmailVerified  Boolean   @default(false) @map("is_email_verified")
+  isPhoneVerified  Boolean   @default(false) @map("is_phone_verified")
+  verification     String?   @unique
+  phoneNumber     String?   @map("phone_number")
+  role            Role
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   @@map("users")
 }

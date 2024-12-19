@@ -29,6 +29,12 @@ export class UserResponseDto implements User {
     lastName: string;
 
     @ApiProperty({
+        description: 'Patronymic of the user',
+        example: faker.person.middleName(),
+    })
+    patronymic: string;
+
+    @ApiProperty({
         description: 'Phone number of the user',
         example: faker.phone.number(),
     })
@@ -45,7 +51,20 @@ export class UserResponseDto implements User {
         description: "Indicates if the user's email is verified",
         example: true,
     })
-    isVerified: boolean;
+    isEmailVerified: boolean;
+
+    @ApiProperty({
+        description: "Indicates if the user's phone is verified",
+        example: true,
+    })
+    isPhoneVerified: boolean;
+
+    @ApiProperty({
+        example: 'e2cfd6d0-9c7b-4382-b672-cc9b4dcaf534',
+        description: 'Verification code for email confirmation',
+        nullable: true,
+    })
+    public verification: string;
 
     @ApiProperty({
         description: 'Role of the user in the system',

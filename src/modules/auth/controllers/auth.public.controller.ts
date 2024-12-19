@@ -6,8 +6,12 @@ import { Public } from 'src/common/decorators/public.decorator';
 
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';
 import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
-import { AuthRefreshResponseDto, AuthResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import {
+    AuthRefreshResponseDto,
+    AuthResponseDto,
+    SignUpByEmailResponseDto,
+} from 'src/modules/auth/dtos/auth.response.dto';
+import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 
@@ -26,9 +30,9 @@ export class PublicAuthController {
     }
 
     @Public()
-    @Post('signup')
-    public signup(@Body() payload: AuthSignupDto): Promise<AuthResponseDto> {
-        return this.authService.signup(payload);
+    @Post('signup/email')
+    public signup(@Body() payload: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
+        return this.authService.signupByEmail(payload);
     }
 
     @Public()
