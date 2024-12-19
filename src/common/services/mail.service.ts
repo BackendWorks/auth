@@ -10,15 +10,24 @@ export class MailService {
     private transporter: nodemailer.Transporter;
 
     constructor(private readonly configService: ConfigService) {
-        const smtpHost = this.configService.get<string>('smtp.SMTP_HOST');
-        const smtpPort = this.configService.get<number>('smtp.SMTP_PORT') || 587;
-        const smtpUser = this.configService.get<string>('smtp.YANDEX_EMAIL');
-        const smtpPassword = this.configService.get<string>('smtp.YANDEX_PASSWORD');
+        const smtpHost = this.configService.get<string>('smtp.host');
+        const smtpPort = this.configService.get<number>('smtp.port') || 587;
+        const smtpUser = this.configService.get<string>('smtp.user');
+        const smtpPassword = this.configService.get<string>('smtp.password');
+
+        if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword) {
+            console.error('Missing SMTP configuration:', {
+                smtpHost,
+                smtpPort,
+                smtpUser,
+                smtpPassword,
+            });
+            throw new Error('SMTP configuration is incomplete');
+        }
 
         this.transporter = nodemailer.createTransport({
             host: smtpHost,
             port: smtpPort,
-            secure: false,
             auth: {
                 user: smtpUser,
                 pass: smtpPassword,
