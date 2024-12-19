@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 import { HashService } from 'src/common/services/hash.service';
 
-jest.mock('bcrypt', () => ({
+jest.mock('bcryptjs', () => ({
     genSaltSync: jest.fn().mockReturnValue('some_salt'),
     hashSync: jest.fn().mockReturnValue('hashed_value'),
     compareSync: jest.fn(),
 }));
 
 describe('HelperHashService', () => {
-    let service;
+    let service: HashService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
