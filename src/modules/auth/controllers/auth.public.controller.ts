@@ -42,9 +42,9 @@ export class PublicAuthController {
         return this.authService.generateTokens(user);
     }
 
-    // @Public()
-    // @Get('test')
-    // public test(): string {
-    //     return 'This is a test string';
-    // }
+    @Public()
+    @Get('test')
+    public test(): string {
+        return 'This is a test string';
+    }
 }
