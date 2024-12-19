@@ -8,8 +8,8 @@
     },
     "scripts": {
         "prebuild": "rimraf dist",
-        "build": "nest build && copyfiles -u 1 'src/common/templates/**/*' dist/common/templates/",
-        "build:prod": "nest build && copyfiles -u 1 'src/common/templates/**/*' dist/common/templates/",
+        "build": "nest build && copyfiles -u 1 'src/templates/**/*' dist/common/templates/",
+        "build:prod": "nest build && copyfiles -u 1 'src/templates/**/*' dist/common/templates/",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "node dist/main",
         "dev": "nest start --watch",

@@ -10,14 +10,6 @@ RUN yarn install --frozen-lockfile
 
 COPY . .
 
-RUN yarn build
-
-RUN mkdir -p dist/common/templates
-
-RUN cp -r src/common/templates/* dist/common/templates/
-
-RUN ls -la dist/common/templates
-
 EXPOSE 9001
 
 CMD [ "yarn", "dev" ]
