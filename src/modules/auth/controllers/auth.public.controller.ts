@@ -47,4 +47,10 @@ export class PublicAuthController {
     public test(): string {
         return 'This is a test string';
     }
+
+    @Public()
+    @Get('test2')
+    public testAnother(): string {
+        return 'This is a test 2 string';
+    }
 }
