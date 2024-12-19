@@ -10,15 +10,10 @@ export class MailService {
     private transporter: nodemailer.Transporter;
 
     constructor(private readonly configService: ConfigService) {
-        const smtpHost = this.configService.get<string>('app.SMTP_HOST');
-        const smtpPort = this.configService.get<number>('app.SMTP_PORT') || 587;
-        const smtpUser = this.configService.get<string>('app.YANDEX_EMAIL');
-        const smtpPassword = this.configService.get<string>('app.YANDEX_PASSWORD');
-
-        console.log('SMTP_HOST:', smtpHost);
-        console.log('SMTP_PORT:', smtpPort);
-        console.log('YANDEX_EMAIL:', smtpUser);
-        console.log('YANDEX_PASSWORD:', smtpPassword ? '***HIDDEN***' : 'NOT SET');
+        const smtpHost = this.configService.get<string>('smtp.SMTP_HOST');
+        const smtpPort = this.configService.get<number>('smtp.SMTP_PORT') || 587;
+        const smtpUser = this.configService.get<string>('smtp.YANDEX_EMAIL');
+        const smtpPassword = this.configService.get<string>('smtp.YANDEX_PASSWORD');
 
         this.transporter = nodemailer.createTransport({
             host: smtpHost,
