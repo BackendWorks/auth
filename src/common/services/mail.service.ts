@@ -15,9 +15,15 @@ export class MailService {
         const smtpUser = this.configService.get<string>('app.YANDEX_EMAIL');
         const smtpPassword = this.configService.get<string>('app.YANDEX_PASSWORD');
 
+        console.log('SMTP_HOST:', smtpHost);
+        console.log('SMTP_PORT:', smtpPort);
+        console.log('YANDEX_EMAIL:', smtpUser);
+        console.log('YANDEX_PASSWORD:', smtpPassword ? '***HIDDEN***' : 'NOT SET');
+
         this.transporter = nodemailer.createTransport({
             host: smtpHost,
             port: smtpPort,
+            secure: false,
             auth: {
                 user: smtpUser,
                 pass: smtpPassword,
@@ -38,7 +44,7 @@ export class MailService {
         templateName: string,
         replacements: Record<string, string>,
     ) {
-        const templatePath = path.join(__dirname, '..', 'templates', templateName);
+        const templatePath = path.join(__dirname, '../../templates', templateName);
 
         let source: string;
         try {
