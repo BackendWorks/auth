@@ -41,10 +41,4 @@ export class PublicAuthController {
     public refreshTokens(@AuthUser() user: IAuthPayload): Promise<AuthRefreshResponseDto> {
         return this.authService.generateTokens(user);
     }
-
-    @Public()
-    @Get('test')
-    public test(): string {
-        return 'This is a test string';
-    }
 }
