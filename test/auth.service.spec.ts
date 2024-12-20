@@ -18,7 +18,6 @@ import { addDays } from 'date-fns';
 
 describe('AuthService', () => {
     let authService: AuthService;
-    let flashCallService: FlashCallService;
     let jwtService: JwtService;
     let userService: UserService;
     let hashService: HashService;
@@ -87,7 +86,6 @@ describe('AuthService', () => {
         hashService = module.get<HashService>(HashService);
         mailService = module.get<MailService>(MailService);
         i18nService = module.get<I18nService>(I18nService);
-        flashCallService = module.get<FlashCallService>(FlashCallService);
     });
 
     describe('verifyToken', () => {
