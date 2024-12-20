@@ -179,12 +179,13 @@ export class AuthService implements IAuthService {
         await this.callService.verifyFlashCall({ phone, code });
 
         await this.userService.updateUser(user.id, {
+            isPhoneVerified: true,
             verificationExpires: addHours(new Date(), this.HOURS_TO_VERIFY),
         });
 
         return {
             status: 200,
-            description: 'Flash call initiated successfully',
+            description: 'Phone verified successfully',
         };
     }
 
