@@ -41,6 +41,7 @@ export class UserService {
             verification,
             verificationExpires,
             isEmailVerified,
+            isPhoneVerified,
             loginAttempts,
             blockExpires,
         } = data;
@@ -55,6 +56,7 @@ export class UserService {
                 verification,
                 verificationExpires,
                 isEmailVerified,
+                isPhoneVerified,
                 loginAttempts,
                 blockExpires,
             },
