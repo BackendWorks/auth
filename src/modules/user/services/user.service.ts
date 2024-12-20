@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { addDays } from 'date-fns';
 
 import { PrismaService } from 'src/common/services/prisma.service';
-import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto, AuthSignupByPhoneDto } from 'src/modules/auth/dtos/auth.signup.dto';
 
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
 import { v4 } from 'uuid';
+import { User, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -19,8 +21,30 @@ export class UserService {
         return this.prismaService.user.findUnique({ where: { email } });
     }
 
-    async updateUser(userId: string, data: UserUpdateDto) {
-        const { firstName, lastName, email, phoneNumber, avatar } = data;
+    async getUserByPhone(phone: string): Promise<UserResponseDto> {
+        return this.prismaService.user.findUnique({
+            where: { phoneNumber: phone },
+        });
+    }
+
+    async findOne(where: Prisma.UserWhereInput): Promise<User | null> {
+        return this.prismaService.user.findFirst({ where });
+    }
+
+    async updateUser(userId: string, data: UserUpdateDto): Promise<User> {
+        const {
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            avatar,
+            verification,
+            verificationExpires,
+            isEmailVerified,
+            loginAttempts,
+            blockExpires,
+        } = data;
+
         return this.prismaService.user.update({
             data: {
                 firstName: firstName?.trim(),
@@ -28,6 +52,11 @@ export class UserService {
                 email,
                 phoneNumber,
                 avatar,
+                verification,
+                verificationExpires,
+                isEmailVerified,
+                loginAttempts,
+                blockExpires,
             },
             where: {
                 id: userId,
@@ -43,6 +72,25 @@ export class UserService {
                 firstName: data?.firstName.trim(),
                 verification: v4(),
                 role: 'USER',
+                isEmailVerified: false,
+                verificationExpires: addDays(new Date(), 1),
+                loginAttempts: 0,
+                blockExpires: null,
+            },
+        });
+    }
+
+    async createUserByPhone(data: AuthSignupByPhoneDto) {
+        return this.prismaService.user.create({
+            data: {
+                email: null,
+                phoneNumber: data?.phone.trim(),
+                firstName: data?.firstName.trim(),
+                role: 'USER',
+                isPhoneVerified: false,
+                verificationExpires: addDays(new Date(), 1),
+                loginAttempts: 0,
+                blockExpires: null,
             },
         });
     }
