@@ -17,6 +17,9 @@ import { AuthJwtRefreshStrategy } from './providers/jwt.refresh.strategy';
 import { HashService } from './services/hash.service';
 import { PrismaService } from './services/prisma.service';
 import { MailService } from './services/mail.service';
+import { HttpModule } from '@nestjs/axios';
+import { CallModule } from 'src/modules/call/call.module';
+import { FlashCallService } from './services/flashCall.service';
 
 @Module({
     imports: [
@@ -27,6 +30,10 @@ import { MailService } from './services/mail.service';
             envFilePath: ['.env'],
             expandVariables: true,
         }),
+        HttpModule.register({
+            timeout: 5000,
+            maxRedirects: 5,
+        }),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         I18nModule.forRoot({
             fallbackLanguage: 'en',
@@ -36,11 +43,13 @@ import { MailService } from './services/mail.service';
             },
             resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
         }),
+        CallModule,
     ],
     providers: [
         PrismaService,
         HashService,
         MailService,
+        FlashCallService,
         AuthJwtAccessStrategy,
         AuthJwtRefreshStrategy,
         {
@@ -66,6 +75,8 @@ import { MailService } from './services/mail.service';
         AuthJwtAccessStrategy,
         AuthJwtRefreshStrategy,
         MailService,
+        FlashCallService,
+        HttpModule,
     ],
 })
 export class CommonModule implements NestModule {

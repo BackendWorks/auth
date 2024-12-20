@@ -4,6 +4,7 @@ import { PrismaService } from 'src/common/services/prisma.service';
 import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
 import { UserService } from 'src/modules/user/services/user.service';
+import { addDays } from 'date-fns';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(() => 'mock-verification-token'), // Mock verification token
@@ -200,6 +201,10 @@ describe('UserService', () => {
                     firstName: signupData.firstName.trim(),
                     role: 'USER',
                     verification: 'mock-verification-token',
+                    isEmailVerified: false,
+                    blockExpires: null,
+                    loginAttempts: 0,
+                    verificationExpires: addDays(new Date(), 1),
                 },
             });
         });

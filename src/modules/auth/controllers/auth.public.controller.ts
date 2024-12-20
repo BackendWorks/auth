@@ -5,15 +5,22 @@ import { AuthUser } from 'src/common/decorators/auth.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';
-import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
+import { AuthLoginByEmailDto } from 'src/modules/auth/dtos/auth.login.dto';
 import {
     AuthRefreshResponseDto,
     AuthResponseDto,
     SignUpByEmailResponseDto,
+    VerifyEmailResponseDto,
 } from 'src/modules/auth/dtos/auth.response.dto';
-import { AuthSignupByEmailDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto, AuthSignupByPhoneDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { VerifyEmailDto } from 'src/modules/auth/dtos/auth.verify-email.dto';
+import { VerifyPhoneDto } from 'src/modules/auth/dtos/auth.verify-phone.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { AuthService } from 'src/modules/auth/services/auth.service';
+import {
+    SendFlashCallResponseDto,
+    VerifyFlashCallResponseDto,
+} from 'src/common/dtos/flash-call-response.dto';
 
 @ApiTags('public.auth')
 @Controller({
@@ -24,15 +31,33 @@ export class PublicAuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Public()
-    @Post('login')
-    public login(@Body() payload: AuthLoginDto): Promise<AuthResponseDto> {
-        return this.authService.login(payload);
+    @Post('login/email')
+    public loginByEmail(@Body() payload: AuthLoginByEmailDto): Promise<AuthResponseDto> {
+        return this.authService.loginByEmail(payload);
     }
 
     @Public()
     @Post('signup/email')
-    public signup(@Body() payload: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
+    public signupByEmail(@Body() payload: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
         return this.authService.signupByEmail(payload);
+    }
+
+    @Public()
+    @Post('signup/phone')
+    public signupByPhone(@Body() payload: AuthSignupByPhoneDto): Promise<SendFlashCallResponseDto> {
+        return this.authService.signupByPhone(payload);
+    }
+
+    @Public()
+    @Post('verify-email')
+    public verifyEmail(@Body() payload: VerifyEmailDto): Promise<VerifyEmailResponseDto> {
+        return this.authService.verifyEmail(payload);
+    }
+
+    @Public()
+    @Post('verify-phone')
+    public verifyPhone(@Body() payload: VerifyPhoneDto): Promise<VerifyFlashCallResponseDto> {
+        return this.authService.verifyPhone(payload);
     }
 
     @Public()
@@ -40,11 +65,5 @@ export class PublicAuthController {
     @Get('refresh')
     public refreshTokens(@AuthUser() user: IAuthPayload): Promise<AuthRefreshResponseDto> {
         return this.authService.generateTokens(user);
-    }
-
-    @Public()
-    @Get('test')
-    public test(): string {
-        return 'This is a test string';
     }
 }

@@ -67,6 +67,28 @@ export class UserResponseDto implements User {
     public verification: string;
 
     @ApiProperty({
+        description: 'The date and time until the user can verify their email',
+        example: faker.date.future().toISOString(),
+        required: false,
+        nullable: true,
+    })
+    verificationExpires: Date | null;
+
+    @ApiProperty({
+        description: 'Number of login attempts the user has made',
+        example: 0,
+    })
+    loginAttempts: number;
+
+    @ApiProperty({
+        description: 'The date and time until which the user is blocked from certain actions',
+        example: null,
+        required: false,
+        nullable: true,
+    })
+    blockExpires: Date | null;
+
+    @ApiProperty({
         description: 'Role of the user in the system',
         enum: $Enums.Role,
         example: $Enums.Role.USER,

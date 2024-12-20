@@ -20,7 +20,7 @@ export class AuthRefreshResponseDto {
     refreshToken: string;
 }
 
-export class AuthResponseDto extends AuthRefreshResponseDto {
+export class AuthResponseDto {
     @ApiProperty({
         description: 'The user details',
         type: UserResponseDto,
@@ -38,10 +38,14 @@ export class SignUpByEmailResponseDto {
     @Type(() => UserResponseDto)
     @ValidateNested()
     user: UserResponseDto;
+}
 
+export class VerifyEmailResponseDto {
     @ApiProperty({
-        description: 'A message indicating the status of the operation',
-        example: 'User successfully registered. Verification link already sent.',
+        description: 'The user details',
+        type: UserResponseDto,
     })
-    message: string;
+    @Type(() => UserResponseDto)
+    @ValidateNested()
+    user: UserResponseDto;
 }
