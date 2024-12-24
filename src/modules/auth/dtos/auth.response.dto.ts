@@ -20,7 +20,7 @@ export class AuthRefreshResponseDto {
     refreshToken: string;
 }
 
-export class AuthResponseDto {
+export class AuthResponseDto extends AuthRefreshResponseDto {
     @ApiProperty({
         description: 'The user details',
         type: UserResponseDto,
@@ -30,7 +30,7 @@ export class AuthResponseDto {
     user: UserResponseDto;
 }
 
-export class SignUpByEmailResponseDto {
+export class SignUpByEmailResponseDto extends AuthRefreshResponseDto {
     @ApiProperty({
         description: 'The user details',
         type: UserResponseDto,

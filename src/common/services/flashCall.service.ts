@@ -147,9 +147,7 @@ export class FlashCallService {
     /**
      * Верификация кода, полученного через флеш-звонок
      */
-    async verifyFlashCall(
-        verifyFlashCallDto: VerifyFlashCallDto,
-    ): Promise<VerifyFlashCallResponseDto> {
+    async verifyFlashCall(verifyFlashCallDto: VerifyFlashCallDto): Promise<void> {
         const { phone, code } = verifyFlashCallDto;
 
         const user = await this.prisma.user.findUnique({
@@ -203,10 +201,5 @@ export class FlashCallService {
                 userId: user.id,
             },
         });
-
-        return {
-            status: 200,
-            description: 'Phone verified successfully',
-        };
     }
 }

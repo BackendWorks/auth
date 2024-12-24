@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from 'src/common/decorators/auth.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';
-import { AuthLoginByEmailDto } from 'src/modules/auth/dtos/auth.login.dto';
+import { AuthLoginByEmailDto, AuthLoginByPhoneDto } from 'src/modules/auth/dtos/auth.login.dto';
 import {
     AuthRefreshResponseDto,
     AuthResponseDto,
@@ -21,6 +21,14 @@ import {
     SendFlashCallResponseDto,
     VerifyFlashCallResponseDto,
 } from 'src/common/dtos/flash-call-response.dto';
+import {
+    ForgotPasswordDto,
+    ForgotPasswordResponseDto,
+    ForgotPasswordVerifyDto,
+    ForgotPasswordVerifyResponseDto,
+    ResetPasswordDto,
+} from 'src/modules/auth/dtos/auth.forgot-password.dto';
+import { Request } from 'express';
 
 @ApiTags('public.auth')
 @Controller({
@@ -34,6 +42,12 @@ export class PublicAuthController {
     @Post('login/email')
     public loginByEmail(@Body() payload: AuthLoginByEmailDto): Promise<AuthResponseDto> {
         return this.authService.loginByEmail(payload);
+    }
+
+    @Public()
+    @Post('login/phone')
+    public loginByPhone(@Body() payload: AuthLoginByPhoneDto): Promise<SendFlashCallResponseDto> {
+        return this.authService.loginByPhone(payload);
     }
 
     @Public()
@@ -58,6 +72,32 @@ export class PublicAuthController {
     @Post('verify-phone')
     public verifyPhone(@Body() payload: VerifyPhoneDto): Promise<VerifyFlashCallResponseDto> {
         return this.authService.verifyPhone(payload);
+    }
+
+    @Public()
+    @Post('forgot-password')
+    public forgotPassword(
+        @Req() req: Request,
+        @Body() payload: ForgotPasswordDto,
+    ): Promise<ForgotPasswordResponseDto> {
+        return this.authService.forgotPassword(req, payload);
+    }
+
+    @Public()
+    @Post('forgot-password-verify')
+    public forgotPasswordVerify(
+        @Req() req: Request,
+        @Body() payload: ForgotPasswordVerifyDto,
+    ): Promise<ForgotPasswordVerifyResponseDto> {
+        return this.authService.forgotPasswordVerify(req, payload);
+    }
+
+    @Public()
+    @Post('reset-password')
+    public resetPassword(
+        @Body() payload: ResetPasswordDto,
+    ): Promise<ForgotPasswordVerifyResponseDto> {
+        return this.authService.resetPassword(payload);
     }
 
     @Public()

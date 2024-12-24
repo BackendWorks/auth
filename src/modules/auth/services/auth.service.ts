@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { addHours } from 'date-fns';
@@ -6,7 +11,7 @@ import { addHours } from 'date-fns';
 import { HashService } from 'src/common/services/hash.service';
 import { UserService } from 'src/modules/user/services/user.service';
 
-import { AuthLoginByEmailDto } from 'src/modules/auth/dtos/auth.login.dto';
+import { AuthLoginByEmailDto, AuthLoginByPhoneDto } from 'src/modules/auth/dtos/auth.login.dto';
 import { AuthResponseDto, SignUpByEmailResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
 import { AuthSignupByEmailDto, AuthSignupByPhoneDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import {
@@ -16,12 +21,26 @@ import {
 } from 'src/modules/auth/interfaces/auth.interface';
 import { IAuthService } from 'src/modules/auth/interfaces/auth.service.interface';
 import { MailService } from 'src/common/services/mail.service';
-import { VerifyEmailDto } from 'src/modules/auth//dtos/auth.verify-email.dto';
-import { User } from '@prisma/client';
+import { VerifyEmailDto } from 'src/modules/auth/dtos/auth.verify-email.dto';
+import { ForgotPassword, User } from '@prisma/client';
 import { v4 } from 'uuid';
 import { FlashCallService } from 'src/common/services/flashCall.service';
 import { VerifyPhoneDto } from 'src/modules/auth/dtos/auth.verify-phone.dto';
-import { SendFlashCallResponseDto } from 'src/common/dtos/flash-call-response.dto';
+import {
+    SendFlashCallResponseDto,
+    VerifyFlashCallResponseDto,
+} from 'src/common/dtos/flash-call-response.dto';
+import {
+    ForgotPasswordDto,
+    ForgotPasswordResponseDto,
+    ForgotPasswordVerifyDto,
+    ResetPasswordDto,
+} from 'src/modules/auth//dtos/auth.forgot-password.dto';
+import { PrismaService } from 'src/common/services/prisma.service';
+import { getClientIp } from 'request-ip';
+import { Request } from 'express';
+import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -39,6 +58,7 @@ export class AuthService implements IAuthService {
         private readonly hashService: HashService,
         private readonly mailService: MailService,
         private readonly callService: FlashCallService,
+        private readonly prisma: PrismaService,
     ) {
         this.accessTokenSecret = this.configService.get<string>('auth.accessToken.secret');
         this.refreshTokenSecret = this.configService.get<string>('auth.refreshToken.secret');
@@ -109,9 +129,29 @@ export class AuthService implements IAuthService {
             throw new NotFoundException('user.invalidPassword');
         }
 
+        const { accessToken, refreshToken } = await this.generateTokens({
+            id: user.id,
+            role: user.role,
+        });
+
         return {
+            accessToken,
+            refreshToken,
             user,
         };
+    }
+
+    async loginByPhone(payload: AuthLoginByPhoneDto): Promise<SendFlashCallResponseDto> {
+        const { phone } = payload;
+
+        const user = await this.userService.getUserByPhone(phone);
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const response = await this.callService.sendFlashCall({ phone });
+
+        return response;
     }
 
     async signupByEmail(data: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
@@ -132,7 +172,13 @@ export class AuthService implements IAuthService {
 
         await this.mailService.sendUserConfirmation(email, createdUser.verification);
 
+        const tokens = await this.generateTokens({
+            id: createdUser.id,
+            role: createdUser.role,
+        });
+
         return {
+            ...tokens,
             user: createdUser,
         };
     }
@@ -167,24 +213,98 @@ export class AuthService implements IAuthService {
             verificationExpires: addHours(new Date(), this.HOURS_TO_VERIFY),
         });
 
+        const tokens = await this.generateTokens({
+            id: updatedUser.id,
+            role: updatedUser.role,
+        });
+
         return {
+            ...tokens,
             user: updatedUser,
         };
     }
 
-    async verifyPhone(verifyPhoneDto: VerifyPhoneDto) {
+    async verifyPhone(verifyPhoneDto: VerifyPhoneDto): Promise<VerifyFlashCallResponseDto> {
         const { phone, code } = verifyPhoneDto;
         const user = await this.userService.getUserByPhone(phone);
 
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
         await this.callService.verifyFlashCall({ phone, code });
 
-        await this.userService.updateUser(user.id, {
+        const updatedUser = await this.userService.updateUser(user.id, {
+            isPhoneVerified: true,
             verificationExpires: addHours(new Date(), this.HOURS_TO_VERIFY),
         });
 
+        const { accessToken, refreshToken } = await this.generateTokens({
+            id: user.id,
+            role: user.role,
+        });
+
+        const userResponseDto = plainToInstance(UserResponseDto, updatedUser);
+
         return {
-            status: 200,
-            description: 'Flash call initiated successfully',
+            accessToken,
+            refreshToken,
+            updatedUser: userResponseDto,
+        };
+    }
+
+    async forgotPassword(
+        req: Request,
+        forgotPasswordDto: ForgotPasswordDto,
+    ): Promise<ForgotPasswordResponseDto> {
+        const { email } = forgotPasswordDto;
+
+        const user = await this.userService.getUserByEmail(email);
+
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const forgotPassword = await this.prisma.forgotPassword.create({
+            data: {
+                email: email,
+                verification: v4(),
+                expires: addHours(new Date(), this.HOURS_TO_VERIFY),
+                ip: this.getIp(req),
+                browser: this.getBrowserInfo(req),
+                country: this.getCountry(req),
+            },
+        });
+
+        await this.mailService.sendPasswordReset(email, forgotPassword.verification);
+
+        return {
+            email: email,
+            message: 'Verification letter sent.',
+        };
+    }
+
+    async forgotPasswordVerify(req: Request, verifyUuidDto: ForgotPasswordVerifyDto) {
+        const forgotPassword = await this.findForgotPasswordByVerification(verifyUuidDto);
+        await this.setForgotPasswordFirstUsed(req, forgotPassword);
+
+        return {
+            email: forgotPassword.email,
+            message: 'Now you can reset your password.',
+        };
+    }
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto) {
+        const { email } = resetPasswordDto;
+
+        const forgotPassword = await this.findForgotPasswordByEmail(resetPasswordDto);
+
+        await this.setForgotPasswordFinalUsed(forgotPassword);
+        await this.resetUserPassword(resetPasswordDto);
+
+        return {
+            email,
+            message: 'Password successfully changed.',
         };
     }
 
@@ -202,5 +322,98 @@ export class AuthService implements IAuthService {
         }
 
         return user;
+    }
+
+    private async findForgotPasswordByVerification(
+        verification: ForgotPasswordVerifyDto,
+    ): Promise<ForgotPassword> {
+        const forgotPassword = await this.prisma.forgotPassword.findFirst({
+            where: {
+                verification: verification.verification,
+                firstUsed: false,
+                finalUsed: false,
+                expires: {
+                    gt: new Date(),
+                },
+            },
+        });
+
+        if (!forgotPassword) {
+            throw new NotFoundException('forgotPassword.forgotPasswordNotFound');
+        }
+
+        return forgotPassword;
+    }
+
+    private async setForgotPasswordFirstUsed(req: Request, forgotPassword: ForgotPassword) {
+        await this.prisma.forgotPassword.update({
+            where: { id: forgotPassword.id },
+            data: {
+                firstUsed: true,
+                ipChanged: this.getIp(req),
+                browserChanged: this.getBrowserInfo(req),
+                countryChanged: this.getCountry(req),
+            },
+        });
+    }
+
+    private async findForgotPasswordByEmail(
+        resetPasswordDto: ResetPasswordDto,
+    ): Promise<ForgotPassword> {
+        const forgotPassword = await this.prisma.forgotPassword.findFirst({
+            where: {
+                email: resetPasswordDto.email,
+                firstUsed: false,
+                finalUsed: false,
+                expires: {
+                    gt: new Date(),
+                },
+            },
+        });
+
+        if (!forgotPassword) {
+            throw new NotFoundException('forgotPassword.forgotPasswordNotFound');
+        }
+
+        return forgotPassword;
+    }
+
+    private async setForgotPasswordFinalUsed(forgotPassword: ForgotPassword) {
+        await this.prisma.forgotPassword.update({
+            where: { id: forgotPassword.id },
+            data: {
+                finalUsed: true,
+            },
+        });
+    }
+
+    private async resetUserPassword(resetPasswordDto: ResetPasswordDto) {
+        const user = await this.userService.findOne({
+            email: resetPasswordDto.email,
+            isEmailVerified: true,
+        });
+
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const passwordHashed = this.hashService.createHash(resetPasswordDto.password);
+
+        await this.userService.updateUser(user.id, {
+            password: passwordHashed,
+        });
+    }
+
+    getIp(req: Request): string {
+        return getClientIp(req);
+    }
+
+    getBrowserInfo(req: Request): string {
+        return req.headers['user-agent'] || 'XX';
+    }
+
+    getCountry(req: Request): string {
+        const country = req.headers['cf-ipcountry'];
+        return Array.isArray(country) ? country[0] : country || 'XX';
     }
 }
