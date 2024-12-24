@@ -392,7 +392,6 @@ describe('AuthService', () => {
 
     describe('verifyPhone', () => {
         it('should verify phone successfully', async () => {
-            // Arrange
             const dto: VerifyPhoneDto = { phone: '+1234567890', code: '1234' };
             const user: User = { ...baseUser, isPhoneVerified: false };
             const updatedUser: User = { ...user, isPhoneVerified: true };

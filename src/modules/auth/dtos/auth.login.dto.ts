@@ -1,6 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString, MinLength } from 'class-validator';
+import {
+    IsEmail,
+    IsNotEmpty,
+    IsPhoneNumber,
+    IsString,
+    MaxLength,
+    MinLength,
+} from 'class-validator';
 
 export class AuthLoginByEmailDto {
     @ApiProperty({
@@ -24,11 +31,15 @@ export class AuthLoginByEmailDto {
 
 export class AuthLoginByPhoneDto {
     @ApiProperty({
-        description: 'Phone number of the user',
-        example: '+1234567890',
+        example: '+79999999999',
+        description: 'The phone number of the user',
+        uniqueItems: true,
+        minLength: 11,
+        maxLength: 11,
     })
-    @IsString()
     @IsNotEmpty()
-    @IsPhoneNumber(null)
-    phone: string;
+    @IsString()
+    @MinLength(11)
+    @MaxLength(11)
+    readonly phone: string;
 }
