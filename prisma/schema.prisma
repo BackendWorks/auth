@@ -51,6 +51,25 @@ model PhoneCode {
 
 }
 
+model ForgotPassword {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  verification  String
+  firstUsed     Boolean  @default(false)
+  finalUsed     Boolean  @default(false)
+  expires       DateTime
+  ip            String
+  browser       String
+  country       String
+  ipChanged     String?
+  browserChanged String?
+  countryChanged String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("forgot_passwords")
+}
+
 enum Role {
   ADMIN @map("ADMIN")
   USER  @map("USER")

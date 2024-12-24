@@ -36,6 +36,7 @@
         "@prisma/client": "^5.21.1",
         "@types/bcryptjs": "^2.4.6",
         "@types/nodemailer": "^6.4.17",
+        "@types/request-ip": "^0.0.41",
         "amqp-connection-manager": "^4.1.14",
         "amqplib": "^0.10.4",
         "axios": "^1.7.9",
@@ -54,6 +55,7 @@
         "passport": "^0.7.0",
         "passport-jwt": "^4.0.1",
         "reflect-metadata": "^0.2.2",
+        "request-ip": "^3.3.0",
         "rxjs": "^7.8.1",
         "uuid": "^11.0.3"
     },

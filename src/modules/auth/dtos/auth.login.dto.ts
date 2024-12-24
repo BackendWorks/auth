@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString, MinLength } from 'class-validator';
 
 export class AuthLoginByEmailDto {
     @ApiProperty({
@@ -20,4 +20,15 @@ export class AuthLoginByEmailDto {
     @IsNotEmpty()
     @MinLength(8)
     public password: string;
+}
+
+export class AuthLoginByPhoneDto {
+    @ApiProperty({
+        description: 'Phone number of the user',
+        example: '+1234567890',
+    })
+    @IsString()
+    @IsNotEmpty()
+    @IsPhoneNumber(null)
+    phone: string;
 }

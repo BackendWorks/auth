@@ -8,6 +8,8 @@ import {
     IsDateString,
     IsBoolean,
     IsInt,
+    IsNotEmpty,
+    MinLength,
 } from 'class-validator';
 
 export class UserUpdateDto {
@@ -19,6 +21,16 @@ export class UserUpdateDto {
     @IsEmail()
     @IsOptional()
     email?: string;
+
+    @ApiProperty({
+        example: faker.internet.password(),
+        description: 'The password of the user',
+    })
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(8)
+    @IsOptional()
+    public password?: string;
 
     @ApiProperty({
         example: faker.phone.number(),

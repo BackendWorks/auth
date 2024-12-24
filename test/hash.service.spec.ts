@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from 'src/common/services/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
 import { HashService } from 'src/common/services/hash.service';
@@ -11,13 +12,30 @@ jest.mock('bcryptjs', () => ({
 
 describe('HelperHashService', () => {
     let service: HashService;
+    let prismaService: PrismaService;
+
+    const prismaServiceMock = {
+        user: {
+            findUnique: jest.fn(),
+            update: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn(),
+        },
+    };
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            providers: [HashService],
+            providers: [
+                HashService,
+                {
+                    provide: PrismaService,
+                    useValue: prismaServiceMock,
+                },
+            ],
         }).compile();
 
         service = module.get<HashService>(HashService);
+        prismaService = module.get<PrismaService>(PrismaService);
     });
 
     it('should be defined', () => {
