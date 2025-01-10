@@ -68,6 +68,7 @@ export class CompanyService {
     }
 
     public async getCompanyById(companyId: string): Promise<CompanyResponseDto> {
+        console.log(companyId);
         const company = await this.prisma.company.findUnique({
             where: { id: companyId },
         });
@@ -76,6 +77,9 @@ export class CompanyService {
     }
 
     private toCompanyResponseDto(company: Company): CompanyResponseDto {
+        if (!company) {
+            throw new ForbiddenException('company.notExist');
+        }
         return {
             id: company.id,
             directorFirstName: company.directorFirstName,
