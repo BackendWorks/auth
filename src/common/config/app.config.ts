@@ -16,5 +16,6 @@ export default registerAs(
             host: process.env.HTTP_HOST ?? '0.0.0.0',
             port: process.env.HTTP_PORT ? Number.parseInt(process.env.HTTP_PORT) : 9001,
         },
+        corsOrigin: process.env.CORS_ORIGIN ?? '*',
     }),
 );

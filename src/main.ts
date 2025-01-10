@@ -5,18 +5,31 @@ import { Transport } from '@nestjs/microservices';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app/app.module';
 import { setupSwagger } from './swagger';
 
 async function bootstrap() {
     const logger = new Logger();
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(express()), {
-        cors: true,
-    });
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(express()));
 
     const configService = app.get(ConfigService);
     const expressApp = app.getHttpAdapter().getInstance();
+
+    app.use(cookieParser());
+
+    const corsOrigin = configService.get<string>('app.corsOrigin') || '*';
+    const allowedOrigins = [corsOrigin, 'http://localhost:8888'];
+
+    console.log(corsOrigin);
+
+    app.enableCors({
+        origin: allowedOrigins,
+        methods: 'GET,POST,PUT,DELETE,OPTIONS',
+        allowedHeaders: 'Content-Type,Authorization',
+        credentials: true,
+    });
 
     expressApp.get('/', (_req: Request, res: Response) => {
         res.status(200).json({

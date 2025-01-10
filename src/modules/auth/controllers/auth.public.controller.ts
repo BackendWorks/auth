@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Post,
+    Req,
+    Res,
+    UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from 'src/common/decorators/auth.decorator';
@@ -21,6 +32,7 @@ import {
     SendFlashCallResponseDto,
     VerifyFlashCallResponseDto,
 } from 'src/common/dtos/flash-call-response.dto';
+
 import {
     ForgotPasswordDto,
     ForgotPasswordResponseDto,
@@ -28,7 +40,8 @@ import {
     ForgotPasswordVerifyResponseDto,
     ResetPasswordDto,
 } from 'src/modules/auth/dtos/auth.forgot-password.dto';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('public.auth')
 @Controller({
@@ -36,12 +49,43 @@ import { Request } from 'express';
     path: '/auth',
 })
 export class PublicAuthController {
-    constructor(private readonly authService: AuthService) {}
+    private readonly env: string;
+
+    constructor(
+        private readonly authService: AuthService,
+        private readonly configService: ConfigService,
+    ) {
+        this.env = this.configService.get<string>('app.env');
+    }
 
     @Public()
     @Post('login/email')
-    public loginByEmail(@Body() payload: AuthLoginByEmailDto): Promise<AuthResponseDto> {
-        return this.authService.loginByEmail(payload);
+    @HttpCode(HttpStatus.OK)
+    public async loginByEmail(
+        @Body() authLoginByEmailDto: AuthLoginByEmailDto,
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<AuthResponseDto> {
+        const authResponse = await this.authService.loginByEmail(authLoginByEmailDto);
+
+        response.cookie('accessToken', authResponse.accessToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 3,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        response.cookie('refreshToken', authResponse.refreshToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        const { accessToken, refreshToken, ...rest } = authResponse;
+
+        return rest;
     }
 
     @Public()
@@ -52,30 +96,81 @@ export class PublicAuthController {
 
     @Public()
     @Post('signup/email')
-    public signupByEmail(@Body() payload: AuthSignupByEmailDto): Promise<SignUpByEmailResponseDto> {
-        return this.authService.signupByEmail(payload);
+    @HttpCode(HttpStatus.CREATED)
+    public async signupByEmail(
+        @Body() authSignupByEmailDto: AuthSignupByEmailDto,
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<SignUpByEmailResponseDto> {
+        const signUpResponse = await this.authService.signupByEmail(authSignupByEmailDto);
+
+        response.cookie('accessToken', signUpResponse.accessToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 3,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        response.cookie('refreshToken', signUpResponse.refreshToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        const { accessToken, refreshToken, ...rest } = signUpResponse;
+
+        return rest;
     }
 
     @Public()
     @Post('signup/phone')
+    @HttpCode(HttpStatus.CREATED)
     public signupByPhone(@Body() payload: AuthSignupByPhoneDto): Promise<SendFlashCallResponseDto> {
         return this.authService.signupByPhone(payload);
     }
 
     @Public()
     @Post('verify-email')
+    @HttpCode(HttpStatus.OK)
     public verifyEmail(@Body() payload: VerifyEmailDto): Promise<VerifyEmailResponseDto> {
         return this.authService.verifyEmail(payload);
     }
 
     @Public()
     @Post('verify-phone')
-    public verifyPhone(@Body() payload: VerifyPhoneDto): Promise<VerifyFlashCallResponseDto> {
-        return this.authService.verifyPhone(payload);
+    @HttpCode(HttpStatus.OK)
+    public async verifyPhone(
+        @Body() verifyPhoneDto: VerifyPhoneDto,
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<VerifyFlashCallResponseDto> {
+        const verifyResponse = await this.authService.verifyPhone(verifyPhoneDto);
+
+        response.cookie('accessToken', verifyResponse.accessToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 3,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        response.cookie('refreshToken', verifyResponse.refreshToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        const { accessToken, refreshToken, ...rest } = verifyResponse;
+
+        return rest;
     }
 
     @Public()
     @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
     public forgotPassword(
         @Req() req: Request,
         @Body() payload: ForgotPasswordDto,
@@ -85,6 +180,7 @@ export class PublicAuthController {
 
     @Public()
     @Post('forgot-password-verify')
+    @HttpCode(HttpStatus.OK)
     public forgotPasswordVerify(
         @Req() req: Request,
         @Body() payload: ForgotPasswordVerifyDto,
@@ -94,6 +190,7 @@ export class PublicAuthController {
 
     @Public()
     @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
     public resetPassword(
         @Body() payload: ResetPasswordDto,
     ): Promise<ForgotPasswordVerifyResponseDto> {
@@ -101,9 +198,56 @@ export class PublicAuthController {
     }
 
     @Public()
+    @Delete('logout')
+    @HttpCode(HttpStatus.OK)
+    public async logout(
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<{ message: string }> {
+        response.cookie('accessToken', '', {
+            httpOnly: true,
+            secure: this.env === 'production',
+            expires: new Date(0),
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        response.cookie('refreshToken', '', {
+            httpOnly: true,
+            secure: this.env === 'production',
+            expires: new Date(0),
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        return { message: 'Successfully logged out' };
+    }
+
+    @Public()
     @UseGuards(AuthJwtRefreshGuard)
     @Get('refresh')
-    public refreshTokens(@AuthUser() user: IAuthPayload): Promise<AuthRefreshResponseDto> {
-        return this.authService.generateTokens(user);
+    @HttpCode(HttpStatus.OK)
+    public async refreshTokens(
+        @AuthUser() user: IAuthPayload,
+        @Res({ passthrough: true }) response: Response,
+    ): Promise<AuthRefreshResponseDto> {
+        const refreshResponse = await this.authService.generateTokens(user);
+
+        response.cookie('accessToken', refreshResponse.accessToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 3,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        response.cookie('refreshToken', refreshResponse.refreshToken, {
+            httpOnly: true,
+            secure: this.env === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 7,
+            sameSite: this.env === 'production' ? 'none' : 'lax',
+            domain: this.env === 'production' ? '.fishstat.tech' : undefined,
+        });
+
+        return refreshResponse;
     }
 }

@@ -33,6 +33,8 @@ model User {
 
   @@map("users")
   PhoneCode PhoneCode[]
+
+  userCompanies UserCompany[]
 }
 
 model PhoneCode {
@@ -68,6 +70,51 @@ model ForgotPassword {
   updatedAt     DateTime @updatedAt
 
   @@map("forgot_passwords")
+}
+
+model Company {
+  id                String   @id @default(uuid())
+  directorFirstName  String
+  directorLastName   String
+  directorPatronymic String?
+  inn         String?
+  ogrn        String?
+  name        String
+  country     String?
+  city        String?
+  legalAddress String?
+  email       String?
+  phone       String?
+  description String?
+  documentUrl String?
+  logoUrl     String?
+  status      CompanyVerificationStatus @default(UNVERIFIED)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("companies")
+
+  userCompanies UserCompany[]
+}
+
+model UserCompany {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("user_company")
+
+  @@unique([userId, companyId])
+}
+
+enum CompanyVerificationStatus {
+  UNVERIFIED @map("UNVERIFIED")
+  VERIFIED   @map("VERIFIED")
 }
 
 enum Role {

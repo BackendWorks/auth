@@ -35,6 +35,7 @@ export class UserService {
         const {
             firstName,
             lastName,
+            patronymic,
             email,
             password,
             phoneNumber,
@@ -51,6 +52,7 @@ export class UserService {
             data: {
                 firstName: firstName?.trim(),
                 lastName: lastName?.trim(),
+                patronymic: patronymic?.trim(),
                 email,
                 password,
                 phoneNumber,

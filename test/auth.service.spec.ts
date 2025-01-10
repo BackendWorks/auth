@@ -618,7 +618,7 @@ describe('AuthService', () => {
             expect(prismaServiceMock.forgotPassword.findFirst).toHaveBeenCalledWith({
                 where: {
                     email: dto.email,
-                    firstUsed: false,
+                    firstUsed: true,
                     finalUsed: false,
                     expires: { gt: expect.any(Date) },
                 },
@@ -652,7 +652,7 @@ describe('AuthService', () => {
             expect(prismaServiceMock.forgotPassword.findFirst).toHaveBeenCalledWith({
                 where: {
                     email: dto.email,
-                    firstUsed: false,
+                    firstUsed: true,
                     finalUsed: false,
                     expires: { gt: expect.any(Date) },
                 },
@@ -675,7 +675,7 @@ describe('AuthService', () => {
             expect(prismaServiceMock.forgotPassword.findFirst).toHaveBeenCalledWith({
                 where: {
                     email: dto.email,
-                    firstUsed: false,
+                    firstUsed: true,
                     finalUsed: false,
                     expires: { gt: expect.any(Date) },
                 },
