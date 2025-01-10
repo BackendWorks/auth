@@ -230,6 +230,7 @@ export class PublicAuthController {
         @AuthUser() user: IAuthPayload,
         @Res({ passthrough: true }) response: Response,
     ): Promise<AuthRefreshResponseDto> {
+        console.log(user);
         const refreshResponse = await this.authService.generateTokens(user);
 
         response.cookie('accessToken', refreshResponse.accessToken, {

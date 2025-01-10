@@ -16,12 +16,13 @@ export class AuthJwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refr
                     if (req && req.cookies) {
                         token = req.cookies['refreshToken'];
                     }
+                    console.log(token);
                     return token;
                 },
             ]),
             ignoreExpiration: false,
             secretOrKey: configService.get<string>('auth.refreshToken.secret'),
-            passReqToCallback: true,
+            passReqToCallback: false,
         });
     }
 
