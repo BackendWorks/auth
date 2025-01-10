@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ZvonokService } from 'src/common/services/zvonok.service';
+import { ZvonokService } from 'auth/src/common/services/zvonok.service';
 import { CallFactory } from './call.factory';
 import { HttpModule } from '@nestjs/axios';
 

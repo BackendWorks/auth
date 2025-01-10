@@ -61,6 +61,13 @@ export class UserUpdateDto {
     lastName?: string;
 
     @ApiProperty({
+        description: 'Patronymic of the user',
+        example: faker.person.middleName(),
+        required: false,
+    })
+    patronymic?: string;
+
+    @ApiProperty({
         example: faker.image.avatar(),
         description: "User's profile picture URL",
         required: false,
