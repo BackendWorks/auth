@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { CommonModule } from 'auth/src/common/common.module';
+import { CommonModule } from 'src/common/common.module';
 
 import { CompanyService } from './services/company.service';
 import { AuthCompanyController } from './controllers/company.auth.controller';
