@@ -40,7 +40,7 @@ export class CompanyUpdateDto {
     })
     @IsOptional()
     @IsString()
-    name?: string;
+    organizationName?: string;
 
     @ApiPropertyOptional({
         description: 'Legal address',

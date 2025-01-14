@@ -79,7 +79,7 @@ model Company {
   directorPatronymic String?
   inn         String?
   ogrn        String?
-  name        String
+  organizationName String
   country     String?
   city        String?
   legalAddress String?

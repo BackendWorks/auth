@@ -34,7 +34,7 @@ export class CompanyCreateDto {
     })
     @IsNotEmpty()
     @IsString()
-    name: string;
+    organizationName: string;
 
     @ApiPropertyOptional({
         description: 'INN',

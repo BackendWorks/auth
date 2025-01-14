@@ -13,7 +13,7 @@ const mockCompany: Company = {
     directorPatronymic: null,
     inn: '2537140750',
     ogrn: null,
-    name: 'ООО ФИШСТАТ',
+    organizationName: 'ООО ФИШСТАТ',
     country: 'Россия',
     city: 'Владивосток',
     legalAddress: '690021, Приморский край, город Владивосток, Черемуховая ул, д. 7, офис 410',
@@ -70,7 +70,7 @@ describe('CompanyService', () => {
                 directorPatronymic: 'Михайлович',
                 inn: '2537140750',
                 ogrn: '1192536019059',
-                name: 'ООО ФИШСТАТ',
+                organizationName: 'ООО ФИШСТАТ',
                 country: 'Россия',
                 city: 'Владивосток',
                 legalAddress:
@@ -90,7 +90,7 @@ describe('CompanyService', () => {
                 directorPatronymic: dto.directorPatronymic,
                 inn: dto.inn,
                 ogrn: dto.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: dto.country,
                 city: dto.city,
                 legalAddress: dto.legalAddress,
@@ -119,7 +119,7 @@ describe('CompanyService', () => {
                     directorPatronymic: dto.directorPatronymic,
                     inn: dto.inn,
                     ogrn: dto.ogrn,
-                    name: dto.name,
+                    organizationName: dto.organizationName,
                     country: dto.country,
                     city: dto.city,
                     legalAddress: dto.legalAddress,
@@ -146,7 +146,7 @@ describe('CompanyService', () => {
                 directorPatronymic: dto.directorPatronymic,
                 inn: dto.inn,
                 ogrn: dto.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: dto.country,
                 city: dto.city,
                 legalAddress: dto.legalAddress,
@@ -166,7 +166,7 @@ describe('CompanyService', () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
                 companyId: '550e8412-e29b-41d4-a716-446655440000',
-                name: 'Updated Company Name',
+                organizationName: 'Updated Company Name',
             };
             prismaMock.userCompany.findFirst.mockResolvedValue(null);
 
@@ -184,7 +184,7 @@ describe('CompanyService', () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
                 companyId: '550e8412-e29b-41d4-a716-446655440000',
-                name: 'ООО СПЕЙС ГРУПП',
+                organizationName: 'ООО СПЕЙС ГРУПП',
             };
 
             prismaMock.userCompany.findFirst.mockResolvedValue({
@@ -197,7 +197,7 @@ describe('CompanyService', () => {
 
             const mockUpdatedCompany: Company = {
                 ...mockCompany,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 updatedAt: new Date('2025-01-01T12:00:00.000Z'),
             };
 
@@ -221,7 +221,7 @@ describe('CompanyService', () => {
                 directorPatronymic: mockUpdatedCompany.directorPatronymic,
                 inn: mockUpdatedCompany.inn,
                 ogrn: mockUpdatedCompany.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: mockUpdatedCompany.country,
                 city: mockUpdatedCompany.city,
                 legalAddress: mockUpdatedCompany.legalAddress,

@@ -44,7 +44,7 @@ export class CompanyResponseDto {
         description: 'Company name',
         example: 'ООО ФИШСТАТ',
     })
-    name: string;
+    organizationName: string;
 
     @ApiProperty({
         description: 'Country of registration, if present',
