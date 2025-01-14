@@ -67,6 +67,15 @@ export class CompanyService {
         return this.toCompanyResponseDto(updatedCompany);
     }
 
+    public async getCompaniesByUserId(userId: string): Promise<CompanyResponseDto[]> {
+        const userCompanies = await this.prisma.userCompany.findMany({
+            where: { userId },
+            include: { company: true },
+        });
+
+        return userCompanies.map(uc => this.toCompanyResponseDto(uc.company));
+    }
+
     public async getCompanyById(companyId: string): Promise<CompanyResponseDto> {
         const company = await this.prisma.company.findUnique({
             where: { id: companyId },

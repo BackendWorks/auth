@@ -114,4 +114,14 @@ export class UserService {
         });
         return;
     }
+
+    async getUsersByIds(userIds: string[]): Promise<UserResponseDto[]> {
+        return this.prismaService.user.findMany({
+            where: {
+                id: {
+                    in: userIds,
+                },
+            },
+        });
+    }
 }

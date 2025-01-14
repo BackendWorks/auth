@@ -37,4 +37,11 @@ export class AuthCompanyController {
     ): Promise<CompanyResponseDto> {
         return this.companyService.updateCompany(user.id, data);
     }
+
+    @ApiBearerAuth('accessToken')
+    @Get()
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    getCompaniesByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyResponseDto[]> {
+        return this.companyService.getCompaniesByUserId(user.id);
+    }
 }
