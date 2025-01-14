@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "companies" ALTER COLUMN "country" DROP NOT NULL,
-ALTER COLUMN "city" DROP NOT NULL;
