@@ -24,9 +24,9 @@ export class CompanyCreateDto {
         description: 'Director patronymic (middle name)',
         example: 'Михайлович',
     })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
-    directorPatronymic?: string;
+    directorPatronymic: string;
 
     @ApiProperty({
         description: 'Company name',
@@ -54,27 +54,31 @@ export class CompanyCreateDto {
         description: 'Country of registration',
         example: 'Россия',
     })
+    @IsOptional()
     @IsString()
-    country: string;
+    country?: string;
 
     @ApiPropertyOptional({
         description: 'City of registration',
         example: 'Владивосток',
     })
+    @IsOptional()
     @IsString()
-    city: string;
+    city?: string;
 
     @ApiPropertyOptional({
         description: 'Legal address',
         example: '690021, Приморский край, город Владивосток, Черемуховая ул, д. 7, офис 410',
     })
     @IsString()
+    @IsNotEmpty()
     legalAddress: string;
 
     @ApiPropertyOptional({
         description: 'Company email',
         example: 'support@fishstat.ru',
     })
+    @IsNotEmpty()
     @IsEmail()
     email: string;
 
@@ -82,6 +86,7 @@ export class CompanyCreateDto {
         description: 'Company phone number',
         example: '79999999999',
     })
+    @IsNotEmpty()
     @IsString()
     phone: string;
 
@@ -89,13 +94,14 @@ export class CompanyCreateDto {
         description: 'Short description of the company',
         example: 'Площадка для торговли рыбой',
     })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
     description?: string;
 
     @ApiPropertyOptional({
         description: 'Link to the registration document (e.g. business license)',
     })
+    @IsNotEmpty()
     @IsString()
     documentUrl: string;
 

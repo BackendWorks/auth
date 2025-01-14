@@ -76,17 +76,17 @@ model Company {
   id                String   @id @default(uuid())
   directorFirstName  String
   directorLastName   String
-  directorPatronymic String?
-  inn         String?
-  ogrn        String?
+  directorPatronymic String
+  inn         String
+  ogrn        String
   organizationName String
   country     String?
   city        String?
-  legalAddress String?
-  email       String?
-  phone       String?
-  description String?
-  documentUrl String?
+  legalAddress String
+  email       String
+  phone       String
+  description String
+  documentUrl String
   logoUrl     String?
   status      CompanyVerificationStatus @default(UNVERIFIED)
   createdAt         DateTime @default(now())
