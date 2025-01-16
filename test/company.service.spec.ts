@@ -103,7 +103,7 @@ describe('CompanyService', () => {
 
             prismaMock.company.create.mockResolvedValue(mockCreatedCompany);
 
-            const result = await companyService.createCompany(dto);
+            const result = await companyService.createCompany(userId, dto);
 
             expect(prismaService.company.create).toHaveBeenCalledWith({
                 data: {

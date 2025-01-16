@@ -132,4 +132,13 @@ export class UserUpdateDto {
     @IsDateString()
     @IsOptional()
     blockExpires?: Date;
+
+    @ApiProperty({
+        description: 'Company ID',
+        example: 12,
+        required: false,
+    })
+    @IsInt()
+    @IsOptional()
+    companyId?: boolean;
 }

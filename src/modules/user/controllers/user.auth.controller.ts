@@ -36,7 +36,7 @@ export class AuthUserController {
     }
 
     @ApiBearerAuth('accessToken')
-    @Post('bulk')
+    @Get('bulk')
     @AllowedRoles([Role.USER, Role.ADMIN])
     async getUsersBulk(@Body('userIds') userIds: string[]): Promise<UserResponseDto[]> {
         return this.userService.getUsersByIds(userIds);

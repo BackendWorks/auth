@@ -6,12 +6,16 @@ import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 
 import { Company, CompanyVerificationStatus } from '@prisma/client';
+import { CompanyUserResponseDto } from 'src/modules/company/dtos/company.users-response.dto';
 
 @Injectable()
 export class CompanyService {
     constructor(private readonly prisma: PrismaService) {}
 
-    public async createCompany(data: CompanyCreateDto): Promise<CompanyResponseDto> {
+    public async createCompany(
+        userId: string,
+        data: CompanyCreateDto,
+    ): Promise<CompanyResponseDto> {
         const createdCompany = await this.prisma.company.create({
             data: {
                 directorFirstName: data.directorFirstName,
@@ -29,6 +33,13 @@ export class CompanyService {
                 documentUrl: data.documentUrl,
                 logoUrl: data.logoUrl ?? null,
                 status: CompanyVerificationStatus.UNVERIFIED,
+            },
+        });
+
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                companyId: createdCompany.id,
             },
         });
 
@@ -109,5 +120,23 @@ export class CompanyService {
             createdAt: company.createdAt,
             updatedAt: company.updatedAt,
         };
+    }
+
+    async getUsersByCompanyId(companyId: string): Promise<CompanyUserResponseDto[]> {
+        const users = await this.prisma.user.findMany({
+            where: {
+                companyId,
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                createdAt: true,
+            },
+        });
+
+        return users.map(user => user);
     }
 }
