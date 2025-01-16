@@ -108,7 +108,7 @@ export class UserResponseDto implements User {
     updatedAt: Date;
 
     @ApiProperty({
-        description: 'The date and time when the user was deleted, if applicable',
+        description: 'The date and time when the user was deleted',
         example: null,
         required: false,
         nullable: true,
