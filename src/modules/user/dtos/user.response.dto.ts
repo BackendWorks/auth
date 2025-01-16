@@ -115,6 +115,12 @@ export class UserResponseDto implements User {
     })
     deletedAt: Date | null;
 
+    @ApiProperty({
+        description: 'Unique identifier for the company',
+        example: faker.string.uuid(),
+    })
+    companyId: string;
+
     @Exclude()
     password: string;
 }
