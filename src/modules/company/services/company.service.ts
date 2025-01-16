@@ -142,6 +142,7 @@ export class CompanyService {
                 lastName: true,
                 role: true,
                 createdAt: true,
+                avatar: true,
             },
         });
 

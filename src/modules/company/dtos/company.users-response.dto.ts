@@ -39,4 +39,11 @@ export class CompanyUserResponseDto {
         example: faker.date.past().toISOString(),
     })
     createdAt: Date;
+
+    @ApiProperty({
+        description: "URL of the user's profile picture",
+        example: faker.image.avatar(),
+        required: false,
+    })
+    avatar: string;
 }
