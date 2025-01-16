@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CompanyUserResponseDto } from './company.users-response.dto';
 
 export class CompanyResponseDto {
     @ApiProperty({
@@ -117,4 +118,8 @@ export class CompanyResponseDto {
         example: '2024-01-02T10:11:12Z',
     })
     updatedAt: Date;
+}
+
+export class CompanyWithUsersResponseDto extends CompanyResponseDto {
+    users: CompanyUserResponseDto[];
 }

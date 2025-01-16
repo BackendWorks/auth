@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -9,7 +9,6 @@ import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
-import { CompanyUserResponseDto } from 'src/modules/company/dtos/company.users-response.dto';
 
 @ApiTags('auth.company')
 @Controller({
@@ -44,12 +43,5 @@ export class AuthCompanyController {
     @AllowedRoles([Role.USER, Role.ADMIN])
     getCompaniesByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyResponseDto> {
         return this.companyService.getCompanyByUserId(user.id);
-    }
-
-    @ApiBearerAuth('accessToken')
-    @Get(':companyId/users')
-    @AllowedRoles([Role.ADMIN])
-    getCompanyUsers(@Param('companyId') companyId: string): Promise<CompanyUserResponseDto[]> {
-        return this.companyService.getUsersByCompanyId(companyId);
     }
 }

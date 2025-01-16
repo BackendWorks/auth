@@ -3,7 +3,10 @@ import { PrismaService } from 'src/common/services/prisma.service';
 
 import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
-import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
+import {
+    CompanyResponseDto,
+    CompanyWithUsersResponseDto,
+} from 'src/modules/company/dtos/company.response.dto';
 
 import { Company, CompanyVerificationStatus } from '@prisma/client';
 import { CompanyUserResponseDto } from 'src/modules/company/dtos/company.users-response.dto';
@@ -67,7 +70,7 @@ export class CompanyService {
         return this.toCompanyResponseDto(updatedCompany);
     }
 
-    public async getCompanyByUserId(userId: string): Promise<CompanyResponseDto> {
+    public async getCompanyByUserId(userId: string): Promise<CompanyWithUsersResponseDto> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: { companyId: true },
@@ -85,7 +88,12 @@ export class CompanyService {
             throw new NotFoundException(`No company found for user ${userId}`);
         }
 
-        return this.toCompanyResponseDto(company);
+        const users = await this.getUsersByCompanyId(company.id);
+
+        return {
+            ...this.toCompanyResponseDto(company),
+            users,
+        };
     }
 
     public async getCompanyById(companyId: string): Promise<CompanyResponseDto> {
