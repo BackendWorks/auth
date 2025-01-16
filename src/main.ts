@@ -22,8 +22,6 @@ async function bootstrap() {
     const corsOrigin = configService.get<string>('app.corsOrigin') || '*';
     const allowedOrigins = [corsOrigin, 'http://localhost:8888'];
 
-    console.log(corsOrigin);
-
     app.enableCors({
         origin: allowedOrigins,
         methods: 'GET,POST,PUT,DELETE,OPTIONS',
