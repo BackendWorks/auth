@@ -7,7 +7,10 @@ import { AllowedRoles } from 'src/common/decorators/role.decorator';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
-import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
+import {
+    CompanyResponseDto,
+    CompanyWithUsersResponseDto,
+} from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
 
 @ApiTags('auth.company')
@@ -41,7 +44,7 @@ export class AuthCompanyController {
     @ApiBearerAuth('accessToken')
     @Get()
     @AllowedRoles([Role.USER, Role.ADMIN])
-    getCompaniesByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyResponseDto> {
+    getCompanyByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyWithUsersResponseDto> {
         return this.companyService.getCompanyByUserId(user.id);
     }
 }
