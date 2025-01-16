@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/prisma.service';
 import { Company, CompanyVerificationStatus } from '@prisma/client';
 import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
@@ -36,9 +36,9 @@ describe('CompanyService', () => {
             create: jest.fn(),
             update: jest.fn(),
         },
-        userCompany: {
-            create: jest.fn(),
-            findFirst: jest.fn(),
+        user: {
+            update: jest.fn(),
+            findUnique: jest.fn(),
         },
     };
 
@@ -102,15 +102,8 @@ describe('CompanyService', () => {
             };
 
             prismaMock.company.create.mockResolvedValue(mockCreatedCompany);
-            prismaMock.userCompany.create.mockResolvedValue({
-                id: '1',
-                userId: userId,
-                companyId: '1',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            });
 
-            const result = await companyService.createCompany(userId, dto);
+            const result = await companyService.createCompany(dto);
 
             expect(prismaService.company.create).toHaveBeenCalledWith({
                 data: {
@@ -129,13 +122,6 @@ describe('CompanyService', () => {
                     documentUrl: dto.documentUrl,
                     logoUrl: dto.logoUrl,
                     status: CompanyVerificationStatus.UNVERIFIED,
-                },
-            });
-
-            expect(prismaService.userCompany.create).toHaveBeenCalledWith({
-                data: {
-                    userId,
-                    companyId: mockCreatedCompany.id,
                 },
             });
 
@@ -162,21 +148,37 @@ describe('CompanyService', () => {
     });
 
     describe('updateCompany', () => {
-        it('should throw ForbiddenException if user does not own the company', async () => {
+        it('should throw NotFoundException if user does not own the company', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
                 companyId: '550e8412-e29b-41d4-a716-446655440000',
                 organizationName: 'Updated Company Name',
             };
-            prismaMock.userCompany.findFirst.mockResolvedValue(null);
+
+            prismaMock.user.findUnique.mockResolvedValue({
+                companyId: 'some-other-company-id',
+            });
+
+            await expect(companyService.updateCompany(userId, dto)).rejects.toThrow(
+                NotFoundException,
+            );
+        });
+
+        it('should throw ForbiddenException if user has no companyId', async () => {
+            const userId = '550e8312-e29b-41d4-a716-446655440000';
+            const dto: CompanyUpdateDto = {
+                companyId: '550e8412-e29b-41d4-a716-446655440000',
+                organizationName: 'Updated Company Name',
+            };
+
+            prismaMock.user.findUnique.mockResolvedValue({
+                companyId: null,
+            });
 
             await expect(companyService.updateCompany(userId, dto)).rejects.toThrow(
                 ForbiddenException,
             );
 
-            expect(prismaService.userCompany.findFirst).toHaveBeenCalledWith({
-                where: { userId, companyId: dto.companyId },
-            });
             expect(prismaService.company.update).not.toHaveBeenCalled();
         });
 
@@ -187,16 +189,13 @@ describe('CompanyService', () => {
                 organizationName: 'ООО СПЕЙС ГРУПП',
             };
 
-            prismaMock.userCompany.findFirst.mockResolvedValue({
-                id: '1',
-                userId: userId,
+            prismaMock.user.findUnique.mockResolvedValue({
                 companyId: dto.companyId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
             });
 
             const mockUpdatedCompany: Company = {
                 ...mockCompany,
+                id: dto.companyId,
                 organizationName: dto.organizationName,
                 updatedAt: new Date('2025-01-01T12:00:00.000Z'),
             };
@@ -204,10 +203,6 @@ describe('CompanyService', () => {
             prismaMock.company.update.mockResolvedValue(mockUpdatedCompany);
 
             const result = await companyService.updateCompany(userId, dto);
-
-            expect(prismaService.userCompany.findFirst).toHaveBeenCalledWith({
-                where: { userId, companyId: dto.companyId },
-            });
 
             expect(prismaService.company.update).toHaveBeenCalledWith({
                 where: { id: dto.companyId },

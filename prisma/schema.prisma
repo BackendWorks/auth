@@ -31,10 +31,11 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+
   @@map("users")
   PhoneCode PhoneCode[]
-
-  userCompanies UserCompany[]
 }
 
 model PhoneCode {
@@ -92,24 +93,9 @@ model Company {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  users    User[]
+
   @@map("companies")
-
-  userCompanies UserCompany[]
-}
-
-model UserCompany {
-  id        String   @id @default(uuid())
-  userId    String
-  companyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id])
-  company Company @relation(fields: [companyId], references: [id])
-
-  @@map("user_company")
-
-  @@unique([userId, companyId])
 }
 
 enum CompanyVerificationStatus {

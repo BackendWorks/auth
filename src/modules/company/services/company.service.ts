@@ -11,10 +11,7 @@ import { Company, CompanyVerificationStatus } from '@prisma/client';
 export class CompanyService {
     constructor(private readonly prisma: PrismaService) {}
 
-    public async createCompany(
-        userId: string,
-        data: CompanyCreateDto,
-    ): Promise<CompanyResponseDto> {
+    public async createCompany(data: CompanyCreateDto): Promise<CompanyResponseDto> {
         const createdCompany = await this.prisma.company.create({
             data: {
                 directorFirstName: data.directorFirstName,
@@ -35,13 +32,6 @@ export class CompanyService {
             },
         });
 
-        await this.prisma.userCompany.create({
-            data: {
-                userId,
-                companyId: createdCompany.id,
-            },
-        });
-
         return this.toCompanyResponseDto(createdCompany);
     }
 
@@ -49,31 +39,42 @@ export class CompanyService {
         userId: string,
         data: CompanyUpdateDto,
     ): Promise<CompanyResponseDto> {
-        const userCompany = await this.prisma.userCompany.findFirst({
-            where: {
-                userId,
-                companyId: data.companyId,
-            },
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { companyId: true },
         });
-        if (!userCompany) {
+
+        if (!user?.companyId && user.companyId !== data.companyId) {
             throw new ForbiddenException('company.notOwned');
         }
 
         const updatedCompany = await this.prisma.company.update({
             where: { id: data.companyId },
-            data: data,
+            data,
         });
 
         return this.toCompanyResponseDto(updatedCompany);
     }
 
-    public async getCompaniesByUserId(userId: string): Promise<CompanyResponseDto[]> {
-        const userCompanies = await this.prisma.userCompany.findMany({
-            where: { userId },
-            include: { company: true },
+    public async getCompanyByUserId(userId: string): Promise<CompanyResponseDto> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { companyId: true },
         });
 
-        return userCompanies.map(uc => this.toCompanyResponseDto(uc.company));
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const company = await this.prisma.company.findUnique({
+            where: { id: user.companyId },
+        });
+
+        if (!company) {
+            throw new NotFoundException(`No company found for user ${userId}`);
+        }
+
+        return this.toCompanyResponseDto(company);
     }
 
     public async getCompanyById(companyId: string): Promise<CompanyResponseDto> {
