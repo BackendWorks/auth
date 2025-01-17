@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { addDays } from 'date-fns';
 
 import { PrismaService } from 'src/common/services/prisma.service';
@@ -123,5 +123,31 @@ export class UserService {
                 },
             },
         });
+    }
+
+    async getUsersByOrganizationName(organizationName: string): Promise<UserResponseDto[]> {
+        if (!organizationName?.trim()) {
+            return [];
+        }
+
+        const companies = await this.prismaService.company.findMany({
+            where: {
+                organizationName: {
+                    contains: organizationName,
+                    mode: 'insensitive',
+                },
+            },
+            include: {
+                users: true,
+            },
+        });
+
+        if (!companies.length) {
+            throw new NotFoundException(`No companies found containing "${organizationName}"`);
+        }
+
+        const users = companies.flatMap(company => company.users);
+
+        return users;
     }
 }
