@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -12,6 +12,7 @@ import {
     CompanyWithUsersResponseDto,
 } from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
+import { CompanySearchDto } from 'src/modules/company//dtos/company.search.dto';
 
 @ApiTags('auth.company')
 @Controller({
@@ -46,5 +47,21 @@ export class AuthCompanyController {
     @AllowedRoles([Role.USER, Role.ADMIN])
     getCompanyByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyWithUsersResponseDto> {
         return this.companyService.getCompanyByUserId(user.id);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get()
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getOrSearchCompanies(
+        @AuthUser() user: IAuthPayload,
+        @Query() query: CompanySearchDto,
+    ): Promise<CompanyWithUsersResponseDto | CompanyWithUsersResponseDto[]> {
+        const hasQueryParams = Object.values(query).some(value => !!value);
+
+        if (!hasQueryParams) {
+            return this.companyService.getCompanyByUserId(user.id);
+        }
+
+        return this.companyService.searchCompanies(query);
     }
 }

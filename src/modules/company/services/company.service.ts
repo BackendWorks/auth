@@ -10,6 +10,7 @@ import {
 
 import { Company, CompanyVerificationStatus } from '@prisma/client';
 import { CompanyUserResponseDto } from 'src/modules/company/dtos/company.users-response.dto';
+import { CompanySearchDto } from 'src/modules/company/dtos/company.search.dto';
 
 @Injectable()
 export class CompanyService {
@@ -147,5 +148,22 @@ export class CompanyService {
         });
 
         return users.map(user => user);
+    }
+
+    async searchCompanies(searchDto: CompanySearchDto): Promise<CompanyWithUsersResponseDto[]> {
+        const { organizationName, inn, ogrn } = searchDto;
+
+        return this.prisma.company.findMany({
+            where: {
+                organizationName: organizationName
+                    ? { contains: organizationName, mode: 'insensitive' }
+                    : undefined,
+                inn: inn ? { contains: inn, mode: 'insensitive' } : undefined,
+                ogrn: ogrn ? { contains: ogrn, mode: 'insensitive' } : undefined,
+            },
+            include: {
+                users: true,
+            },
+        });
     }
 }

@@ -11,6 +11,7 @@ import {
     IsNotEmpty,
     MinLength,
 } from 'class-validator';
+import { $Enums } from '@prisma/client';
 
 export class UserUpdateDto {
     @ApiProperty({

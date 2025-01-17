@@ -36,6 +36,7 @@ model User {
 
   @@map("users")
   PhoneCode PhoneCode[]
+  companyRequests CompanyRequest[]
 }
 
 model PhoneCode {
@@ -94,8 +95,24 @@ model Company {
   updatedAt         DateTime @updatedAt
 
   users    User[]
+  companyRequests   CompanyRequest[]
 
   @@map("companies")
+}
+
+model CompanyRequest {
+  id        String                @id @default(uuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id])
+
+  companyId String
+  company   Company               @relation(fields: [companyId], references: [id])
+
+  status    CompanyRequestStatus  @default(PENDING)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@map("company_requests")
 }
 
 enum CompanyVerificationStatus {
@@ -106,4 +123,10 @@ enum CompanyVerificationStatus {
 enum Role {
   ADMIN @map("ADMIN")
   USER  @map("USER")
+}
+
+enum CompanyRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
 }
