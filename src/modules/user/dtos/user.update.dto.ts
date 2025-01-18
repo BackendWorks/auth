@@ -11,7 +11,6 @@ import {
     IsNotEmpty,
     MinLength,
 } from 'class-validator';
-import { $Enums } from '@prisma/client';
 
 export class UserUpdateDto {
     @ApiProperty({
@@ -141,5 +140,5 @@ export class UserUpdateDto {
     })
     @IsInt()
     @IsOptional()
-    companyId?: boolean;
+    companyId?: string;
 }
