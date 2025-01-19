@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -12,36 +9,36 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(uuid()) @map("id")
-  email           String?   @unique @map("email")
-  password        String?   @map("password")
-  firstName        String?   @map("first_name")
-  lastName        String?   @map("last_name")
-  patronymic      String?   @map("patronymic")
-  avatar          String?   @map("avatar")
-  isEmailVerified  Boolean   @default(false) @map("is_email_verified")
-  isPhoneVerified  Boolean   @default(false) @map("is_phone_verified")
-  verification     String?   @unique
-  verificationExpires DateTime? @map("verification_expires")
-  loginAttempts       Int       @default(0) @map("login_attempts")
-  blockExpires        DateTime? @map("block_expires")
-  phoneNumber     String?   @unique @map("phone_number")
-  role            Role
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  deletedAt       DateTime? @map("deleted_at")
-
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id])
+  id                  String           @id @default(uuid()) @map("id")
+  email               String?          @unique @map("email")
+  password            String?          @map("password")
+  firstName           String?          @map("first_name")
+  lastName            String?          @map("last_name")
+  avatar              String?          @map("avatar")
+  phoneNumber         String?          @unique @map("phone_number")
+  role                Role
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  deletedAt           DateTime?        @map("deleted_at")
+  isEmailVerified     Boolean          @default(false) @map("is_email_verified")
+  isPhoneVerified     Boolean          @default(false) @map("is_phone_verified")
+  patronymic          String?          @map("patronymic")
+  verification        String?          @unique
+  blockExpires        DateTime?        @map("block_expires")
+  loginAttempts       Int              @default(0) @map("login_attempts")
+  verificationExpires DateTime?        @map("verification_expires")
+  companyId           String?
+  companyRequests     CompanyRequest[]
+  PhoneCode           PhoneCode?
+  company             Company?         @relation(fields: [companyId], references: [id])
 
   @@map("users")
-  PhoneCode PhoneCode[]
-  companyRequests CompanyRequest[]
 }
 
 model PhoneCode {
-  id            String   @id @default(uuid())
-  userId        String
+  id            String    @id @default(uuid())
+  userId        String?   @unique
+  phone         String    @unique
   phoneCodeHash String
   requestCount  Int       @default(0)
   lastSentAt    DateTime?
@@ -49,68 +46,64 @@ model PhoneCode {
   blockedUntil  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  user          User?     @relation(fields: [userId], references: [id])
 
   @@map("phone_code")
-  user          User      @relation(fields: [userId], references: [id])
-
 }
 
 model ForgotPassword {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  verification  String
-  firstUsed     Boolean  @default(false)
-  finalUsed     Boolean  @default(false)
-  expires       DateTime
-  ip            String
-  browser       String
-  country       String
-  ipChanged     String?
+  id             String   @id @default(uuid())
+  email          String   @unique
+  verification   String
+  firstUsed      Boolean  @default(false)
+  finalUsed      Boolean  @default(false)
+  expires        DateTime
+  ip             String
+  browser        String
+  country        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   browserChanged String?
   countryChanged String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  ipChanged      String?
 
   @@map("forgot_passwords")
 }
 
 model Company {
-  id                String   @id @default(uuid())
+  id                 String                    @id @default(uuid())
   directorFirstName  String
   directorLastName   String
   directorPatronymic String
-  inn         String
-  ogrn        String
-  organizationName String
-  country     String?
-  city        String?
-  legalAddress String
-  email       String
-  phone       String
-  description String
-  documentUrl String
-  logoUrl     String?
-  status      CompanyVerificationStatus @default(UNVERIFIED)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  users    User[]
-  companyRequests   CompanyRequest[]
+  inn                String
+  ogrn               String
+  organizationName   String
+  country            String?
+  city               String?
+  legalAddress       String
+  email              String
+  phone              String
+  description        String
+  documentUrl        String
+  logoUrl            String?
+  status             CompanyVerificationStatus @default(UNVERIFIED)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  companyRequests    CompanyRequest[]
+  users              User[]
 
   @@map("companies")
 }
 
 model CompanyRequest {
-  id        String                @id @default(uuid())
+  id        String               @id @default(uuid())
   userId    String
-  user      User                  @relation(fields: [userId], references: [id])
-
   companyId String
-  company   Company               @relation(fields: [companyId], references: [id])
-
-  status    CompanyRequestStatus  @default(PENDING)
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  status    CompanyRequestStatus @default(PENDING)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  company   Company              @relation(fields: [companyId], references: [id])
+  user      User                 @relation(fields: [userId], references: [id])
 
   @@map("company_requests")
 }

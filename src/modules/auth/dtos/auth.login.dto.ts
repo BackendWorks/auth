@@ -31,7 +31,7 @@ export class AuthLoginByEmailDto {
 
 export class AuthLoginByPhoneDto {
     @ApiProperty({
-        example: '+79999999999',
+        example: '79999999999',
         description: 'The phone number of the user',
         uniqueItems: true,
         minLength: 11,

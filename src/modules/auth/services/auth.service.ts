@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { addHours } from 'date-fns';
@@ -40,6 +45,9 @@ import { getClientIp } from 'request-ip';
 import { Request } from 'express';
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { plainToInstance } from 'class-transformer';
+import { ChangePhoneDto } from 'src/modules/auth/dtos/auth.change-phone.dto';
+import { ChangeEmailDto } from 'src/modules/auth/dtos/auth.change-email.dto';
+import { VerifyEmailChangeDto } from 'src/modules/auth/dtos/auth.verify-change-email.dto';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -153,6 +161,91 @@ export class AuthService implements IAuthService {
         const response = await this.callService.sendFlashCall({ phone });
 
         return response;
+    }
+
+    async changePhone(
+        user: IAuthPayload,
+        payload: ChangePhoneDto,
+    ): Promise<SendFlashCallResponseDto> {
+        const { phone } = payload;
+
+        const existingUser = await this.userService.getUserByPhone(phone);
+        if (existingUser) {
+            throw new BadRequestException('user.userWithPhoneFound');
+        }
+
+        const response = await this.callService.sendFlashCall({ phone }, user.id);
+
+        return response;
+    }
+
+    async verifyChangePhone(
+        user: IAuthPayload,
+        payload: VerifyPhoneDto,
+    ): Promise<VerifyFlashCallResponseDto> {
+        const { phone, code } = payload;
+
+        await this.callService.verifyFlashCall({ phone, code });
+        console.log(phone, code, user);
+
+        const updatedUser = await this.userService.updateUser(user.id, {
+            phoneNumber: phone,
+        });
+
+        return {
+            updatedUser,
+        };
+    }
+
+    async changeEmail(user: IAuthPayload, payload: ChangeEmailDto) {
+        const { newEmail } = payload;
+
+        const foundUser = await this.userService.findOne({ id: user.id });
+        if (!foundUser) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const existingEmailUser = await this.userService.getUserByEmail(newEmail);
+        if (existingEmailUser) {
+            throw new ConflictException('user.userExistsByEmail');
+        }
+
+        const verificationToken = v4();
+        await this.userService.updateUser(foundUser.id, {
+            verification: verificationToken,
+            verificationExpires: addHours(new Date(), this.HOURS_TO_VERIFY),
+        });
+
+        await this.mailService.sendUserConfirmation(newEmail, verificationToken);
+
+        return { message: 'Verification email sent to the new address.' };
+    }
+
+    async verifyChangeEmail(payload: VerifyEmailChangeDto): Promise<UserResponseDto> {
+        const { verification, newEmail } = payload;
+
+        const user = await this.userService.findOne({
+            verification,
+            verificationExpires: { gt: new Date() },
+        });
+
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
+        }
+
+        const existingEmailUser = await this.userService.getUserByEmail(newEmail);
+        if (existingEmailUser) {
+            throw new ConflictException('user.userExistsByEmail');
+        }
+
+        const updatedUser = await this.userService.updateUser(user.id, {
+            email: newEmail,
+            isEmailVerified: true,
+            verification: v4(),
+            verificationExpires: addHours(new Date(), this.HOURS_TO_VERIFY),
+        });
+
+        return plainToInstance(UserResponseDto, updatedUser);
     }
 
     async signupByEmail(
