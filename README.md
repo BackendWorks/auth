@@ -1,4 +1,4 @@
-## Auth service
+## Auth Submodule Service
 
 [Nest](https://github.com/nestjs/nest) Microservice framework auth service TypeScript repository.
 
