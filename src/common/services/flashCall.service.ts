@@ -98,9 +98,11 @@ export class FlashCallService {
                 requestCount: 1,
                 lastSentAt: now,
                 expiresAt: addMinutes(now, PINCODE_EXPIRATION_MINUTES),
-                user: {
-                    connect: { id: userId },
-                },
+                ...(userId && {
+                    user: {
+                        connect: { id: userId },
+                    },
+                }),
             },
             update: {
                 phoneCodeHash,
