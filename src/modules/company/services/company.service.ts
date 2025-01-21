@@ -3,13 +3,9 @@ import { PrismaService } from 'src/common/services/prisma.service';
 
 import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
-import {
-    CompanyResponseDto,
-    CompanyWithUsersResponseDto,
-} from 'src/modules/company/dtos/company.response.dto';
+import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 
 import { Company, CompanyVerificationStatus } from '@prisma/client';
-import { CompanyUserResponseDto } from 'src/modules/company/dtos/company.users-response.dto';
 import { CompanySearchDto } from 'src/modules/company/dtos/company.search.dto';
 
 @Injectable()
@@ -59,19 +55,19 @@ export class CompanyService {
             select: { companyId: true },
         });
 
-        if (!user?.companyId && user.companyId !== data.companyId) {
+        if (!user?.companyId && user.companyId !== data.id) {
             throw new ForbiddenException('company.notOwned');
         }
 
         const updatedCompany = await this.prisma.company.update({
-            where: { id: data.companyId },
+            where: { id: data.id },
             data,
         });
 
         return this.toCompanyResponseDto(updatedCompany);
     }
 
-    public async getCompanyByUserId(userId: string): Promise<CompanyWithUsersResponseDto> {
+    public async getCompanyByUserId(userId: string): Promise<CompanyResponseDto> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: { companyId: true },
@@ -89,11 +85,8 @@ export class CompanyService {
             throw new NotFoundException(`No company found for user ${userId}`);
         }
 
-        const users = await this.getUsersByCompanyId(company.id);
-
         return {
             ...this.toCompanyResponseDto(company),
-            users,
         };
     }
 
@@ -131,26 +124,7 @@ export class CompanyService {
         };
     }
 
-    async getUsersByCompanyId(companyId: string): Promise<CompanyUserResponseDto[]> {
-        const users = await this.prisma.user.findMany({
-            where: {
-                companyId,
-            },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                createdAt: true,
-                avatar: true,
-            },
-        });
-
-        return users.map(user => user);
-    }
-
-    async searchCompanies(searchDto: CompanySearchDto): Promise<CompanyWithUsersResponseDto[]> {
+    async searchCompanies(searchDto: CompanySearchDto): Promise<CompanyResponseDto[]> {
         const { organizationName, inn, ogrn } = searchDto;
 
         return this.prisma.company.findMany({

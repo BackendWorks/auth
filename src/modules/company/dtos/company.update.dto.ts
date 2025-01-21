@@ -8,7 +8,7 @@ export class CompanyUpdateDto {
     })
     @IsNotEmpty()
     @IsString()
-    companyId: string;
+    id: string;
 
     @ApiPropertyOptional({
         description: 'Director first name',

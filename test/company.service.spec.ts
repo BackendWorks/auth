@@ -151,7 +151,7 @@ describe('CompanyService', () => {
         it('should throw NotFoundException if user does not own the company', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
-                companyId: '550e8412-e29b-41d4-a716-446655440000',
+                id: '550e8412-e29b-41d4-a716-446655440000',
                 organizationName: 'Updated Company Name',
             };
 
@@ -167,7 +167,7 @@ describe('CompanyService', () => {
         it('should throw ForbiddenException if user has no companyId', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
-                companyId: '550e8412-e29b-41d4-a716-446655440000',
+                id: '550e8412-e29b-41d4-a716-446655440000',
                 organizationName: 'Updated Company Name',
             };
 
@@ -185,17 +185,17 @@ describe('CompanyService', () => {
         it('should update the company if user owns it', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
-                companyId: '550e8412-e29b-41d4-a716-446655440000',
+                id: '550e8412-e29b-41d4-a716-446655440000',
                 organizationName: 'ООО СПЕЙС ГРУПП',
             };
 
             prismaMock.user.findUnique.mockResolvedValue({
-                companyId: dto.companyId,
+                companyId: dto.id,
             });
 
             const mockUpdatedCompany: Company = {
                 ...mockCompany,
-                id: dto.companyId,
+                id: dto.id,
                 organizationName: dto.organizationName,
                 updatedAt: new Date('2025-01-01T12:00:00.000Z'),
             };
@@ -205,7 +205,7 @@ describe('CompanyService', () => {
             const result = await companyService.updateCompany(userId, dto);
 
             expect(prismaService.company.update).toHaveBeenCalledWith({
-                where: { id: dto.companyId },
+                where: { id: dto.id },
                 data: dto,
             });
 
