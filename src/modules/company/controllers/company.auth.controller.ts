@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -9,6 +9,7 @@ import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
+import { CompanySearchDto } from 'src/modules/company//dtos/company.search.dto';
 
 @ApiTags('auth.company')
 @Controller({
@@ -36,5 +37,28 @@ export class AuthCompanyController {
         @Body() data: CompanyUpdateDto,
     ): Promise<CompanyResponseDto> {
         return this.companyService.updateCompany(user.id, data);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get()
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    getCompanyByUserId(@AuthUser() user: IAuthPayload): Promise<CompanyResponseDto> {
+        return this.companyService.getCompanyByUserId(user.id);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get()
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getOrSearchCompanies(
+        @AuthUser() user: IAuthPayload,
+        @Query() query: CompanySearchDto,
+    ): Promise<CompanyResponseDto[] | CompanyResponseDto> {
+        const hasQueryParams = Object.values(query).some(value => !!value);
+
+        if (!hasQueryParams) {
+            return this.companyService.getCompanyByUserId(user.id);
+        }
+
+        return this.companyService.searchCompanies(query);
     }
 }

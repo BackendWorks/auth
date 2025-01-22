@@ -108,12 +108,18 @@ export class UserResponseDto implements User {
     updatedAt: Date;
 
     @ApiProperty({
-        description: 'The date and time when the user was deleted, if applicable',
+        description: 'The date and time when the user was deleted',
         example: null,
         required: false,
         nullable: true,
     })
     deletedAt: Date | null;
+
+    @ApiProperty({
+        description: 'Unique identifier for the company',
+        example: faker.string.uuid(),
+    })
+    companyId: string;
 
     @Exclude()
     password: string;

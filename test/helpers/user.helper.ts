@@ -20,5 +20,6 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),
     deletedAt: null,
+    companyId: faker.string.uuid(),
     ...overrides,
 });

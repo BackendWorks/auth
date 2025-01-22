@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { addDays } from 'date-fns';
 
 import { PrismaService } from 'src/common/services/prisma.service';
@@ -7,7 +7,7 @@ import { AuthSignupByEmailDto, AuthSignupByPhoneDto } from 'src/modules/auth/dto
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
 import { v4 } from 'uuid';
-import { User, Prisma } from '@prisma/client';
+import { User, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -113,5 +113,86 @@ export class UserService {
             },
         });
         return;
+    }
+
+    async getUsersByIds(userIds: string[]): Promise<UserResponseDto[]> {
+        return this.prismaService.user.findMany({
+            where: {
+                id: {
+                    in: userIds,
+                },
+            },
+        });
+    }
+
+    async getUsersByCompanyId(companyId: string): Promise<UserResponseDto[]> {
+        if (!companyId?.trim()) {
+            return [];
+        }
+
+        const users = await this.prismaService.user.findMany({
+            where: {
+                companyId,
+            },
+        });
+
+        if (!users.length) {
+            throw new NotFoundException(`No users found for companyId "${companyId}"`);
+        }
+
+        return users;
+    }
+
+    async getUsersByOrganizationName(organizationName: string): Promise<UserResponseDto[]> {
+        if (!organizationName?.trim()) {
+            return [];
+        }
+
+        const companies = await this.prismaService.company.findMany({
+            where: {
+                organizationName: {
+                    contains: organizationName,
+                    mode: 'insensitive',
+                },
+            },
+            include: {
+                users: true,
+            },
+        });
+
+        if (!companies.length) {
+            throw new NotFoundException(`No companies found containing "${organizationName}"`);
+        }
+
+        const users = companies.flatMap(company => company.users);
+
+        return users;
+    }
+
+    async updateUserRole(userId: string, role: Role): Promise<User> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException(`User with ID "${userId}" not found`);
+        }
+
+        return this.prismaService.user.update({
+            where: { id: userId },
+            data: { role },
+        });
+    }
+
+    async removeUserFromCompany(userId: string): Promise<User> {
+        const user = await this.prismaService.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with ID "${userId}" not found`);
+        }
+
+        return this.prismaService.user.update({
+            where: { id: userId },
+            data: { companyId: null },
+        });
     }
 }

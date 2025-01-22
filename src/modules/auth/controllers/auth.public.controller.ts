@@ -10,12 +10,12 @@ import {
     Res,
     UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { AuthUser } from 'src/common/decorators/auth.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
-
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';
+
 import { AuthLoginByEmailDto, AuthLoginByPhoneDto } from 'src/modules/auth/dtos/auth.login.dto';
 import {
     AuthRefreshResponseDto,
@@ -28,6 +28,7 @@ import { VerifyEmailDto } from 'src/modules/auth/dtos/auth.verify-email.dto';
 import { VerifyPhoneDto } from 'src/modules/auth/dtos/auth.verify-phone.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { AuthService } from 'src/modules/auth/services/auth.service';
+
 import {
     SendFlashCallResponseDto,
     VerifyFlashCallResponseDto,
@@ -40,8 +41,13 @@ import {
     ForgotPasswordVerifyResponseDto,
     ResetPasswordDto,
 } from 'src/modules/auth/dtos/auth.forgot-password.dto';
+
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { ChangePhoneDto } from 'src/modules/auth/dtos/auth.change-phone.dto';
+import { VerifyEmailChangeDto } from 'src/modules/auth/dtos/auth.verify-change-email.dto';
+import { ChangeEmailDto } from 'src/modules/auth/dtos/auth.change-email.dto';
+import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 
 @ApiTags('public.auth')
 @Controller({
@@ -84,7 +90,6 @@ export class PublicAuthController {
         });
 
         const { accessToken, refreshToken, ...rest } = authResponse;
-
         return rest;
     }
 
@@ -120,7 +125,6 @@ export class PublicAuthController {
         });
 
         const { accessToken, refreshToken, ...rest } = signUpResponse;
-
         return rest;
     }
 
@@ -164,7 +168,6 @@ export class PublicAuthController {
         });
 
         const { accessToken, refreshToken, ...rest } = verifyResponse;
-
         return rest;
     }
 
@@ -249,5 +252,46 @@ export class PublicAuthController {
         });
 
         return refreshResponse;
+    }
+
+    // ----------------------------
+    // Protected endpoints below
+    // ----------------------------
+
+    @Post('change/phone')
+    @ApiBearerAuth('accessToken')
+    public changePhone(
+        @AuthUser() user: IAuthPayload,
+        @Body() payload: ChangePhoneDto,
+    ): Promise<SendFlashCallResponseDto> {
+        return this.authService.changePhone(user, payload);
+    }
+
+    @Post('change/email')
+    @ApiBearerAuth('accessToken')
+    public async changeEmail(
+        @AuthUser() user: IAuthPayload,
+        @Body() payload: ChangeEmailDto,
+    ): Promise<{ message: string }> {
+        return this.authService.changeEmail(user, payload);
+    }
+
+    @Post('verify-change/email')
+    @ApiBearerAuth('accessToken')
+    @HttpCode(HttpStatus.OK)
+    public async verifyChangeEmail(
+        @Body() payload: VerifyEmailChangeDto,
+    ): Promise<UserResponseDto> {
+        return this.authService.verifyChangeEmail(payload);
+    }
+
+    @Post('verify-change/phone')
+    @ApiBearerAuth('accessToken')
+    @HttpCode(HttpStatus.OK)
+    public async verifyChangePhone(
+        @AuthUser() user: IAuthPayload,
+        @Body() payload: VerifyPhoneDto,
+    ): Promise<VerifyFlashCallResponseDto> {
+        return this.authService.verifyChangePhone(user, payload);
     }
 }

@@ -8,7 +8,7 @@ export class CompanyUpdateDto {
     })
     @IsNotEmpty()
     @IsString()
-    companyId: string;
+    id: string;
 
     @ApiPropertyOptional({
         description: 'Director first name',
@@ -40,7 +40,7 @@ export class CompanyUpdateDto {
     })
     @IsOptional()
     @IsString()
-    name?: string;
+    organizationName?: string;
 
     @ApiPropertyOptional({
         description: 'Legal address',

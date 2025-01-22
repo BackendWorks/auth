@@ -1,19 +1,9 @@
-import {
-    Injectable,
-    HttpException,
-    HttpStatus,
-    BadRequestException,
-    Logger,
-    NotFoundException,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { addMinutes, addHours, isAfter } from 'date-fns';
 import * as bcrypt from 'bcryptjs';
 
 import { SendFlashCallDto, VerifyFlashCallDto } from 'src/common/dtos/send-flash-call.dto';
-import {
-    SendFlashCallResponseDto,
-    VerifyFlashCallResponseDto,
-} from 'src/common/dtos/flash-call-response.dto';
+import { SendFlashCallResponseDto } from 'src/common/dtos/flash-call-response.dto';
 
 import { CallFactory } from 'src/modules/call/call.factory';
 import { CallProviders } from 'src/modules/call/interfaces/call.interface';
@@ -33,31 +23,20 @@ export class FlashCallService {
         private readonly callFactory: CallFactory,
     ) {}
 
-    /**
-     * Отправка флеш-звонка пользователю.
-     * Проверяем ограничения и, если всё в порядке, генерируем pincode через провайдер и отправляем звонок.
-     */
-    async sendFlashCall(sendFlashCallDto: SendFlashCallDto): Promise<SendFlashCallResponseDto> {
+    async sendFlashCall(
+        sendFlashCallDto: SendFlashCallDto,
+        userId?: string,
+    ): Promise<SendFlashCallResponseDto> {
         const { phone } = sendFlashCallDto;
-
-        const user = await this.prisma.user.findUnique({
-            where: { phoneNumber: phone },
-        });
-
-        if (!user) {
-            throw new NotFoundException('user.userNotFound');
-        }
-
-        const phoneCode = await this.prisma.phoneCode.findUnique({
-            where: {
-                id: user.id,
-            },
-        });
 
         const now = new Date();
 
+        const phoneCode = await this.prisma.phoneCode.findUnique({
+            where: { phone },
+        });
+
         if (phoneCode) {
-            if (phoneCode.blockedUntil && isAfter(now, phoneCode.blockedUntil) === false) {
+            if (phoneCode.blockedUntil && isAfter(now, phoneCode.blockedUntil)) {
                 const remainingMinutes = Math.ceil(
                     (phoneCode.blockedUntil.getTime() - now.getTime()) / 60000,
                 );
@@ -69,7 +48,7 @@ export class FlashCallService {
 
             if (phoneCode.lastSentAt) {
                 const nextAllowedTime = addMinutes(phoneCode.lastSentAt, MIN_INTERVAL_MINUTES);
-                if (isAfter(now, nextAllowedTime) === false) {
+                if (isAfter(now, nextAllowedTime)) {
                     const remainingSeconds = Math.ceil(
                         (nextAllowedTime.getTime() - now.getTime()) / 1000,
                     );
@@ -82,7 +61,7 @@ export class FlashCallService {
 
             if (phoneCode.requestCount >= MAX_REQUESTS_PER_DAY) {
                 await this.prisma.phoneCode.update({
-                    where: { id: user.id },
+                    where: { phone },
                     data: {
                         blockedUntil: addHours(now, BLOCK_DURATION_HOURS),
                     },
@@ -109,34 +88,29 @@ export class FlashCallService {
             throw new HttpException('Failed to send flash call', HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        if (!pincode) {
-            this.logger.error('Pincode is undefined or null before hashing.');
-            throw new BadRequestException('Invalid pincode.');
-        }
-
         const phoneCodeHash = await bcrypt.hash(pincode, 10);
 
-        if (phoneCode) {
-            await this.prisma.phoneCode.update({
-                where: { id: user.id },
-                data: {
-                    phoneCodeHash,
-                    requestCount: phoneCode.requestCount + 1,
-                    lastSentAt: now,
-                    expiresAt: addMinutes(now, PINCODE_EXPIRATION_MINUTES),
-                },
-            });
-        } else {
-            await this.prisma.phoneCode.create({
-                data: {
-                    userId: user.id,
-                    phoneCodeHash,
-                    requestCount: 1,
-                    lastSentAt: now,
-                    expiresAt: addMinutes(now, PINCODE_EXPIRATION_MINUTES),
-                },
-            });
-        }
+        await this.prisma.phoneCode.upsert({
+            where: { phone },
+            create: {
+                phone,
+                phoneCodeHash,
+                requestCount: 1,
+                lastSentAt: now,
+                expiresAt: addMinutes(now, PINCODE_EXPIRATION_MINUTES),
+                ...(userId && {
+                    user: {
+                        connect: { id: userId },
+                    },
+                }),
+            },
+            update: {
+                phoneCodeHash,
+                requestCount: phoneCode ? phoneCode.requestCount + 1 : 1,
+                lastSentAt: now,
+                expiresAt: addMinutes(now, PINCODE_EXPIRATION_MINUTES),
+            },
+        });
 
         return {
             status: 200,
@@ -144,25 +118,10 @@ export class FlashCallService {
         };
     }
 
-    /**
-     * Верификация кода, полученного через флеш-звонок
-     */
-    async verifyFlashCall(verifyFlashCallDto: VerifyFlashCallDto): Promise<void> {
+    public async verifyFlashCall(verifyFlashCallDto: VerifyFlashCallDto): Promise<void> {
         const { phone, code } = verifyFlashCallDto;
-
-        const user = await this.prisma.user.findUnique({
-            where: { phoneNumber: phone },
-        });
-
-        if (!user) {
-            throw new HttpException(
-                'User with this phone number does not exist',
-                HttpStatus.NOT_FOUND,
-            );
-        }
-
-        const phoneCode = await this.prisma.phoneCode.findFirst({
-            where: { userId: user.id },
+        const phoneCode = await this.prisma.phoneCode.findUnique({
+            where: { phone },
         });
 
         if (!phoneCode) {
@@ -173,13 +132,12 @@ export class FlashCallService {
         }
 
         const now = new Date();
-
-        if (phoneCode.blockedUntil && isAfter(now, phoneCode.blockedUntil) === false) {
+        if (phoneCode.blockedUntil && isAfter(now, phoneCode.blockedUntil)) {
             const remainingMinutes = Math.ceil(
                 (phoneCode.blockedUntil.getTime() - now.getTime()) / 60000,
             );
             throw new HttpException(
-                `You are temporarily blocked from verifying. Please try again after ${remainingMinutes} minutes.`,
+                `You are temporarily blocked. Please try again after ${remainingMinutes} minutes.`,
                 HttpStatus.TOO_MANY_REQUESTS,
             );
         }
@@ -196,10 +154,10 @@ export class FlashCallService {
             throw new HttpException('Invalid verification code.', HttpStatus.BAD_REQUEST);
         }
 
-        await this.prisma.phoneCode.deleteMany({
-            where: {
-                userId: user.id,
-            },
+        await this.prisma.phoneCode.delete({
+            where: { phone },
         });
+
+        this.logger.log(`Phone verification successful and code removed. Phone: ${phone}`);
     }
 }

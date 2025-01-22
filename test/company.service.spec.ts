@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/prisma.service';
 import { Company, CompanyVerificationStatus } from '@prisma/client';
 import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
@@ -13,7 +13,7 @@ const mockCompany: Company = {
     directorPatronymic: null,
     inn: '2537140750',
     ogrn: null,
-    name: 'ООО ФИШСТАТ',
+    organizationName: 'ООО ФИШСТАТ',
     country: 'Россия',
     city: 'Владивосток',
     legalAddress: '690021, Приморский край, город Владивосток, Черемуховая ул, д. 7, офис 410',
@@ -36,9 +36,9 @@ describe('CompanyService', () => {
             create: jest.fn(),
             update: jest.fn(),
         },
-        userCompany: {
-            create: jest.fn(),
-            findFirst: jest.fn(),
+        user: {
+            update: jest.fn(),
+            findUnique: jest.fn(),
         },
     };
 
@@ -70,7 +70,7 @@ describe('CompanyService', () => {
                 directorPatronymic: 'Михайлович',
                 inn: '2537140750',
                 ogrn: '1192536019059',
-                name: 'ООО ФИШСТАТ',
+                organizationName: 'ООО ФИШСТАТ',
                 country: 'Россия',
                 city: 'Владивосток',
                 legalAddress:
@@ -90,7 +90,7 @@ describe('CompanyService', () => {
                 directorPatronymic: dto.directorPatronymic,
                 inn: dto.inn,
                 ogrn: dto.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: dto.country,
                 city: dto.city,
                 legalAddress: dto.legalAddress,
@@ -102,13 +102,6 @@ describe('CompanyService', () => {
             };
 
             prismaMock.company.create.mockResolvedValue(mockCreatedCompany);
-            prismaMock.userCompany.create.mockResolvedValue({
-                id: '1',
-                userId: userId,
-                companyId: '1',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            });
 
             const result = await companyService.createCompany(userId, dto);
 
@@ -119,7 +112,7 @@ describe('CompanyService', () => {
                     directorPatronymic: dto.directorPatronymic,
                     inn: dto.inn,
                     ogrn: dto.ogrn,
-                    name: dto.name,
+                    organizationName: dto.organizationName,
                     country: dto.country,
                     city: dto.city,
                     legalAddress: dto.legalAddress,
@@ -132,13 +125,6 @@ describe('CompanyService', () => {
                 },
             });
 
-            expect(prismaService.userCompany.create).toHaveBeenCalledWith({
-                data: {
-                    userId,
-                    companyId: mockCreatedCompany.id,
-                },
-            });
-
             expect(result).toEqual({
                 id: '550e8412-e29b-41d4-a716-446655440000',
                 directorFirstName: dto.directorFirstName,
@@ -146,7 +132,7 @@ describe('CompanyService', () => {
                 directorPatronymic: dto.directorPatronymic,
                 inn: dto.inn,
                 ogrn: dto.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: dto.country,
                 city: dto.city,
                 legalAddress: dto.legalAddress,
@@ -162,42 +148,55 @@ describe('CompanyService', () => {
     });
 
     describe('updateCompany', () => {
-        it('should throw ForbiddenException if user does not own the company', async () => {
+        it('should throw NotFoundException if user does not own the company', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
-                companyId: '550e8412-e29b-41d4-a716-446655440000',
-                name: 'Updated Company Name',
+                id: '550e8412-e29b-41d4-a716-446655440000',
+                organizationName: 'Updated Company Name',
             };
-            prismaMock.userCompany.findFirst.mockResolvedValue(null);
+
+            prismaMock.user.findUnique.mockResolvedValue({
+                companyId: 'some-other-company-id',
+            });
+
+            await expect(companyService.updateCompany(userId, dto)).rejects.toThrow(
+                NotFoundException,
+            );
+        });
+
+        it('should throw ForbiddenException if user has no companyId', async () => {
+            const userId = '550e8312-e29b-41d4-a716-446655440000';
+            const dto: CompanyUpdateDto = {
+                id: '550e8412-e29b-41d4-a716-446655440000',
+                organizationName: 'Updated Company Name',
+            };
+
+            prismaMock.user.findUnique.mockResolvedValue({
+                companyId: null,
+            });
 
             await expect(companyService.updateCompany(userId, dto)).rejects.toThrow(
                 ForbiddenException,
             );
 
-            expect(prismaService.userCompany.findFirst).toHaveBeenCalledWith({
-                where: { userId, companyId: dto.companyId },
-            });
             expect(prismaService.company.update).not.toHaveBeenCalled();
         });
 
         it('should update the company if user owns it', async () => {
             const userId = '550e8312-e29b-41d4-a716-446655440000';
             const dto: CompanyUpdateDto = {
-                companyId: '550e8412-e29b-41d4-a716-446655440000',
-                name: 'ООО СПЕЙС ГРУПП',
+                id: '550e8412-e29b-41d4-a716-446655440000',
+                organizationName: 'ООО СПЕЙС ГРУПП',
             };
 
-            prismaMock.userCompany.findFirst.mockResolvedValue({
-                id: '1',
-                userId: userId,
-                companyId: dto.companyId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+            prismaMock.user.findUnique.mockResolvedValue({
+                companyId: dto.id,
             });
 
             const mockUpdatedCompany: Company = {
                 ...mockCompany,
-                name: dto.name,
+                id: dto.id,
+                organizationName: dto.organizationName,
                 updatedAt: new Date('2025-01-01T12:00:00.000Z'),
             };
 
@@ -205,12 +204,8 @@ describe('CompanyService', () => {
 
             const result = await companyService.updateCompany(userId, dto);
 
-            expect(prismaService.userCompany.findFirst).toHaveBeenCalledWith({
-                where: { userId, companyId: dto.companyId },
-            });
-
             expect(prismaService.company.update).toHaveBeenCalledWith({
-                where: { id: dto.companyId },
+                where: { id: dto.id },
                 data: dto,
             });
 
@@ -221,7 +216,7 @@ describe('CompanyService', () => {
                 directorPatronymic: mockUpdatedCompany.directorPatronymic,
                 inn: mockUpdatedCompany.inn,
                 ogrn: mockUpdatedCompany.ogrn,
-                name: dto.name,
+                organizationName: dto.organizationName,
                 country: mockUpdatedCompany.country,
                 city: mockUpdatedCompany.city,
                 legalAddress: mockUpdatedCompany.legalAddress,

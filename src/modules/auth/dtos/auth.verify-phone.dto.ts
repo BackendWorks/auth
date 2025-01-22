@@ -3,8 +3,8 @@ import { IsPhoneNumber, IsNotEmpty, Length } from 'class-validator';
 
 export class VerifyPhoneDto {
     @ApiProperty({
-        example: '+79999999999',
-        description: 'Phone number in +7XXXXXXXXXX format',
+        example: '79999999999',
+        description: 'Phone number in 7XXXXXXXXXX format',
     })
     @IsNotEmpty()
     @IsPhoneNumber('RU', { message: 'Invalid phone number format.' })

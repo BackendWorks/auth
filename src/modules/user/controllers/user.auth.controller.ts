@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
@@ -33,5 +33,32 @@ export class AuthUserController {
     @AllowedRoles([Role.USER, Role.ADMIN])
     getUserInfo(@AuthUser() user: IAuthPayload): Promise<UserResponseDto> {
         return this.userService.getUserById(user.id);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get('bulk')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getUsersBulk(@Body('userIds') userIds: string[]): Promise<UserResponseDto[]> {
+        return this.userService.getUsersByIds(userIds);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get('search-company')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getUsersByOrganizationName(
+        @AuthUser() user: IAuthPayload,
+        @Query('organizationName') organizationName: string,
+    ): Promise<UserResponseDto[]> {
+        return this.userService.getUsersByOrganizationName(organizationName);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get('by-company')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getUsersByCompanyId(
+        @AuthUser() user: IAuthPayload,
+        @Query('companyId') companyId: string,
+    ): Promise<UserResponseDto[]> {
+        return this.userService.getUsersByCompanyId(companyId);
     }
 }
