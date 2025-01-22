@@ -9,8 +9,8 @@ import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
-import { CompanySearchDto } from 'src/modules/company//dtos/company.search.dto';
-import { CompanyDocumentCreateDto } from 'modules/company/dtos/company.documents.create';
+import { CompanySearchDto } from 'src/modules/company/dtos/company.search.dto';
+import { CompanyDocumentCreateDto } from 'src/modules/company/dtos/company.documents.create';
 
 @ApiTags('auth.company')
 @Controller({
