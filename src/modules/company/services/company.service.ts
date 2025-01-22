@@ -5,8 +5,9 @@ import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 
-import { Company, CompanyVerificationStatus } from '@prisma/client';
+import { Company, CompanyDocument, CompanyVerificationStatus } from '@prisma/client';
 import { CompanySearchDto } from 'src/modules/company/dtos/company.search.dto';
+import { CompanyDocumentCreateDto } from 'src/modules/company/dtos/company.documents.create';
 
 @Injectable()
 export class CompanyService {
@@ -139,5 +140,46 @@ export class CompanyService {
                 users: true,
             },
         });
+    }
+
+    public async addDocumentToCompany(
+        userId: string,
+        companyId: string,
+        data: CompanyDocumentCreateDto,
+    ): Promise<CompanyDocument> {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.companyId !== companyId) {
+            throw new ForbiddenException('You do not own this company');
+        }
+
+        return this.prisma.companyDocument.create({
+            data: {
+                companyId,
+                ...data,
+            },
+        });
+    }
+
+    public async getDocumentsByCompanyId(
+        userId: string,
+        companyId: string,
+    ): Promise<CompanyDocument[]> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { companyId: true },
+        });
+        if (!user || user.companyId !== companyId) {
+            throw new ForbiddenException('You do not own this company');
+        }
+
+        const documents = await this.prisma.companyDocument.findMany({
+            where: { companyId },
+        });
+
+        if (!documents.length) {
+            throw new NotFoundException('No documents found for this company');
+        }
+
+        return documents;
     }
 }

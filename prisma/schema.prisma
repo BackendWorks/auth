@@ -91,6 +91,7 @@ model Company {
   updatedAt          DateTime                  @updatedAt
   companyRequests    CompanyRequest[]
   users              User[]
+  companyDocuments   CompanyDocument[]
 
   @@map("companies")
 }
@@ -106,6 +107,19 @@ model CompanyRequest {
   user      User                 @relation(fields: [userId], references: [id])
 
   @@map("company_requests")
+}
+
+model CompanyDocument {
+  id          String   @id @default(uuid())
+  companyId   String
+  fileId        String
+  documentUrl String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  @@map("company_documents")
 }
 
 enum CompanyVerificationStatus {
