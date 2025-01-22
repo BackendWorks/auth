@@ -5,9 +5,10 @@ import { CompanyCreateDto } from 'src/modules/company/dtos/company.create.dto';
 import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 
-import { Company, CompanyDocument, CompanyVerificationStatus } from '@prisma/client';
+import { Company, CompanyVerificationStatus } from '@prisma/client';
 import { CompanySearchDto } from 'src/modules/company/dtos/company.search.dto';
 import { CompanyDocumentCreateDto } from 'src/modules/company/dtos/company.documents.create';
+import { CompanyDocumentResponseDto } from 'src/modules/company/dtos/company.document.response.dto';
 
 @Injectable()
 export class CompanyService {
@@ -146,7 +147,7 @@ export class CompanyService {
         userId: string,
         companyId: string,
         data: CompanyDocumentCreateDto,
-    ): Promise<CompanyDocument> {
+    ): Promise<CompanyDocumentResponseDto> {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user || user.companyId !== companyId) {
             throw new ForbiddenException('You do not own this company');
@@ -163,7 +164,7 @@ export class CompanyService {
     public async getDocumentsByCompanyId(
         userId: string,
         companyId: string,
-    ): Promise<CompanyDocument[]> {
+    ): Promise<CompanyDocumentResponseDto[]> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: { companyId: true },
