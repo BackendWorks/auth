@@ -8,7 +8,7 @@ export class CompanyDocumentCreateDto {
     })
     @IsNotEmpty()
     @IsString()
-    id: string;
+    fileId: string;
 
     @ApiProperty({
         description: 'Link to the registration document (e.g. business license)',
