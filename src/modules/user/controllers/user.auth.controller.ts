@@ -51,4 +51,14 @@ export class AuthUserController {
     ): Promise<UserResponseDto[]> {
         return this.userService.getUsersByOrganizationName(organizationName);
     }
+
+    @ApiBearerAuth('accessToken')
+    @Get('by-company')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getUsersByCompanyId(
+        @AuthUser() user: IAuthPayload,
+        @Query('companyId') companyId: string,
+    ): Promise<UserResponseDto[]> {
+        return this.userService.getUsersByCompanyId(companyId);
+    }
 }

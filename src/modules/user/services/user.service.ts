@@ -125,6 +125,24 @@ export class UserService {
         });
     }
 
+    async getUsersByCompanyId(companyId: string): Promise<UserResponseDto[]> {
+        if (!companyId?.trim()) {
+            return [];
+        }
+
+        const users = await this.prismaService.user.findMany({
+            where: {
+                companyId,
+            },
+        });
+
+        if (!users.length) {
+            throw new NotFoundException(`No users found for companyId "${companyId}"`);
+        }
+
+        return users;
+    }
+
     async getUsersByOrganizationName(organizationName: string): Promise<UserResponseDto[]> {
         if (!organizationName?.trim()) {
             return [];
