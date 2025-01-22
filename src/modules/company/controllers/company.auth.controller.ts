@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { CompanyDocument, Role } from '@prisma/client';
 
 import { AuthUser } from 'src/common/decorators/auth.decorator';
 import { AllowedRoles } from 'src/common/decorators/role.decorator';
@@ -10,6 +10,7 @@ import { CompanyUpdateDto } from 'src/modules/company/dtos/company.update.dto';
 import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 import { CompanyService } from 'src/modules/company/services/company.service';
 import { CompanySearchDto } from 'src/modules/company//dtos/company.search.dto';
+import { CompanyDocumentCreateDto } from 'modules/company/dtos/company.documents.create';
 
 @ApiTags('auth.company')
 @Controller({
@@ -60,5 +61,26 @@ export class AuthCompanyController {
         }
 
         return this.companyService.searchCompanies(query);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Post(':companyId/document')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async addDocumentToCompany(
+        @AuthUser() user: IAuthPayload,
+        @Param('companyId') companyId: string,
+        @Body() data: CompanyDocumentCreateDto,
+    ) {
+        return this.companyService.addDocumentToCompany(user.id, companyId, data);
+    }
+
+    @ApiBearerAuth('accessToken')
+    @Get(':companyId/document')
+    @AllowedRoles([Role.USER, Role.ADMIN])
+    async getDocumentsByCompany(
+        @AuthUser() user: IAuthPayload,
+        @Param('companyId') companyId: string,
+    ): Promise<CompanyDocument[]> {
+        return this.companyService.getDocumentsByCompanyId(user.id, companyId);
     }
 }
