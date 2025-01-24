@@ -42,6 +42,16 @@ export class AppController {
         }
     }
 
+    @MessagePattern('testConnection')
+    public async testConnection(@TransformMessagePayload() payload: any) {
+        this.logger.log('Received testConnection request: ' + JSON.stringify(payload));
+        return {
+            success: true,
+            message: 'Auth service connection OK',
+            payload,
+        };
+    }
+
     @MessagePattern('getUserById')
     public async getUserById(@TransformMessagePayload() payload: Record<string, string>) {
         this.logger.log(`Fetching user by ID: ${payload.userId}`);
