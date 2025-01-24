@@ -42,7 +42,7 @@ export class AppController {
         }
     }
 
-    @MessagePattern('testConnection')
+    @MessagePattern('testConnectionTest')
     public async testConnection(@TransformMessagePayload() payload: any) {
         this.logger.log('Received testConnection request: ' + JSON.stringify(payload));
         return {
