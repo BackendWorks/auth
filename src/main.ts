@@ -80,7 +80,7 @@ async function bootstrap() {
             options: {
                 urls: [configService.get<string>('rmq.uri')],
                 queue: configService.get<string>('rmq.auth'),
-                queueOptions: { durable: false },
+                queueOptions: { durable: true },
                 prefetchCount: 1,
             },
         });
