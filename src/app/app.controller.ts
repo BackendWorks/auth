@@ -7,6 +7,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { PrismaService } from 'src/common/services/prisma.service';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { UserService } from 'src/modules/user/services/user.service';
+import { CompanyService } from 'src/modules/company/services/company.service';
 
 @Controller({
     version: VERSION_NEUTRAL,
@@ -20,6 +21,7 @@ export class AppController {
         private readonly prismaService: PrismaService,
         private readonly authService: AuthService,
         private readonly userService: UserService,
+        private readonly companyService: CompanyService,
     ) {}
 
     @Get('/health')
@@ -51,6 +53,19 @@ export class AppController {
             return user;
         } catch (error) {
             this.logger.error(`Error fetching user by ID: ${payload.userId}`, error.stack);
+            throw new Error('Failed to fetch user by ID');
+        }
+    }
+
+    @MessagePattern('getCompanyById')
+    public async getCompanyById(@TransformMessagePayload() payload: Record<string, string>) {
+        this.logger.log(`Fetching user by ID: ${payload.userId}`);
+        try {
+            const company = await this.companyService.getCompanyById(payload.companyId);
+            this.logger.log(`Successfully fetched user: ${JSON.stringify(company)}`);
+            return company;
+        } catch (error) {
+            this.logger.error(`Error fetching user by ID: ${payload.companyId}`, error.stack);
             throw new Error('Failed to fetch user by ID');
         }
     }
