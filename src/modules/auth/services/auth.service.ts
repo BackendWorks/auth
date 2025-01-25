@@ -158,7 +158,7 @@ export class AuthService implements IAuthService {
             throw new NotFoundException('user.userNotFound');
         }
 
-        const response = await this.callService.sendFlashCall({ phone });
+        const response = await this.callService.sendFlashCall({ phone }, user.id);
 
         return response;
     }
