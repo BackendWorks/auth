@@ -71,7 +71,8 @@ export class AppController {
     }
 
     @MessagePattern('getAllCompaniesIds')
-    public async getAllCompanies() {
+    public async getAllCompanies(@TransformMessagePayload() payload: any) {
+        console.log('payload =>', payload);
         const companies = await this.companyService.getAllCompaniesIds();
         return companies;
     }
