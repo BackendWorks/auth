@@ -143,6 +143,15 @@ export class CompanyService {
         });
     }
 
+    public async getAllCompaniesIds(): Promise<{ id: string }[]> {
+        const companies = await this.prisma.company.findMany({
+            select: {
+                id: true,
+            },
+        });
+        return companies;
+    }
+
     public async addDocumentToCompany(
         userId: string,
         companyId: string,

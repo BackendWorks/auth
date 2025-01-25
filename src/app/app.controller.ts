@@ -70,6 +70,12 @@ export class AppController {
         }
     }
 
+    @MessagePattern('getAllCompaniesIds')
+    public async getAllCompanies() {
+        const companies = await this.companyService.getAllCompaniesIds();
+        return companies;
+    }
+
     @MessagePattern('getUserByEmail')
     public async getUserByEmail(@TransformMessagePayload() payload: Record<string, string>) {
         this.logger.log(`Fetching user by email: ${payload.userName}`);
