@@ -246,7 +246,10 @@ describe('AuthService', () => {
             const result = await authService.loginByPhone(dto);
 
             expect(userServiceMock.getUserByPhone).toHaveBeenCalledWith(dto.phone);
-            expect(callServiceMock.sendFlashCall).toHaveBeenCalledWith({ phone: dto.phone });
+            expect(callServiceMock.sendFlashCall).toHaveBeenCalledWith(
+                { phone: dto.phone },
+                user.id,
+            );
             expect(result).toEqual(flashCallResponse);
         });
 
@@ -270,7 +273,10 @@ describe('AuthService', () => {
             // Act & Assert
             await expect(authService.loginByPhone(dto)).rejects.toThrow(BadRequestException);
             expect(userServiceMock.getUserByPhone).toHaveBeenCalledWith(dto.phone);
-            expect(callServiceMock.sendFlashCall).toHaveBeenCalledWith({ phone: dto.phone });
+            expect(callServiceMock.sendFlashCall).toHaveBeenCalledWith(
+                { phone: dto.phone },
+                user.id,
+            );
             expect(userServiceMock.updateUser).not.toHaveBeenCalled();
             expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
         });
