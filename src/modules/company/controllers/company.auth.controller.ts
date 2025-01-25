@@ -55,6 +55,10 @@ export class AuthCompanyController {
         @AuthUser() user: IAuthPayload,
         @Query() query: CompanySearchDto,
     ): Promise<CompanyResponseDto[] | CompanyResponseDto> {
+        if (query.companyId) {
+            return this.companyService.getCompanyById(query.companyId);
+        }
+
         const hasQueryParams = Object.values(query).some(value => !!value);
 
         if (!hasQueryParams) {

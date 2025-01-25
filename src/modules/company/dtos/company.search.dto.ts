@@ -9,4 +9,7 @@ export class CompanySearchDto {
 
     @ApiPropertyOptional()
     ogrn?: string;
+
+    @ApiPropertyOptional()
+    companyId?: string;
 }
