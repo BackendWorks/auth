@@ -127,20 +127,22 @@ export class CompanyService {
     }
 
     async searchCompanies(searchDto: CompanySearchDto): Promise<CompanyResponseDto[]> {
-        const { organizationName, inn, ogrn } = searchDto;
+        const { organizationName } = searchDto;
 
-        return this.prisma.company.findMany({
+        const companies = await this.prisma.company.findMany({
             where: {
-                organizationName: organizationName
-                    ? { contains: organizationName, mode: 'insensitive' }
-                    : undefined,
-                inn: inn ? { contains: inn, mode: 'insensitive' } : undefined,
-                ogrn: ogrn ? { contains: ogrn, mode: 'insensitive' } : undefined,
+                organizationName: {
+                    contains: organizationName,
+                    mode: 'insensitive',
+                },
             },
             include: {
                 users: true,
             },
+            take: 3,
         });
+
+        return companies;
     }
 
     public async getAllCompaniesIds(): Promise<{ id: string }[]> {

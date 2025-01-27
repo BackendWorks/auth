@@ -49,7 +49,7 @@ export class AuthCompanyController {
     }
 
     @ApiBearerAuth('accessToken')
-    @Get()
+    @Get('/search')
     @AllowedRoles([Role.USER, Role.ADMIN])
     async getOrSearchCompanies(
         @AuthUser() user: IAuthPayload,
