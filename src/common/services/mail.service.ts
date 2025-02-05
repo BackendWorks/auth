@@ -93,7 +93,7 @@ export class MailService {
      * @param token Confirmation token
      */
     async sendUserConfirmation(email: string, token: string) {
-        const url = `https://fishstat.tech/auth/email-verify?token=${token}&email=${email}`;
+        const url = `https://fishstat.ru/auth/email-verify?token=${token}&email=${email}`;
         const replacements = {
             url,
             date: this.formatDate(new Date()),
@@ -120,7 +120,7 @@ export class MailService {
      * @param token Password reset token
      */
     async sendPasswordReset(email: string, token: string) {
-        const url = `https://fishstat.tech/auth/reset-password-verify?token=${token}&email=${email}`;
+        const url = `https://fishstat.ru/auth/reset-password-verify?token=${token}&email=${email}`;
         const replacements = {
             url,
             date: this.formatDate(new Date()),
