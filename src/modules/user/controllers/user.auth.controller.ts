@@ -46,7 +46,6 @@ export class AuthUserController {
     @Get('search-company')
     @AllowedRoles([Role.USER, Role.ADMIN])
     async getUsersByOrganizationName(
-        @AuthUser() user: IAuthPayload,
         @Query('organizationName') organizationName: string,
     ): Promise<UserResponseDto[]> {
         return this.userService.getUsersByOrganizationName(organizationName);

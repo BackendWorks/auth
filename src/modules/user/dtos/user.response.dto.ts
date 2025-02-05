@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
-import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, User } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { $Enums, type Company, User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
+import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dto';
 
 export class UserResponseDto implements User {
     @ApiProperty({
@@ -120,6 +121,9 @@ export class UserResponseDto implements User {
         example: faker.string.uuid(),
     })
     companyId: string;
+
+    @ApiPropertyOptional({ type: CompanyResponseDto })
+    company?: Company;
 
     @Exclude()
     password: string;

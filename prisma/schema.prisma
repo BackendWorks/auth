@@ -112,12 +112,12 @@ model CompanyRequest {
 model CompanyDocument {
   id          String   @id @default(uuid())
   companyId   String
-  fileId        String
+  fileId      String
   documentUrl String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  company     Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 
   @@map("company_documents")
 }

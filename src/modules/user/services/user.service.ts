@@ -122,6 +122,9 @@ export class UserService {
                     in: userIds,
                 },
             },
+            include: {
+                company: true,
+            },
         });
     }
 

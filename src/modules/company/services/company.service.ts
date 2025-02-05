@@ -123,6 +123,7 @@ export class CompanyService {
             status: company.status,
             createdAt: company.createdAt,
             updatedAt: company.updatedAt,
+            logoUrl: company.logoUrl,
         };
     }
 
