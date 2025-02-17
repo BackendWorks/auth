@@ -3,6 +3,8 @@ import { CompanyResponseDto } from 'src/modules/company/dtos/company.response.dt
 import { ApiTags } from '@nestjs/swagger';
 import { CompanyService } from 'src/modules/company/services/company.service';
 import { Public } from 'src/common/decorators/public.decorator';
+import { MessagePattern } from '@nestjs/microservices';
+import { TransformMessagePayload } from 'common/decorators/payload.decorator';
 
 @ApiTags('public.company')
 @Controller({
@@ -11,6 +13,11 @@ import { Public } from 'src/common/decorators/public.decorator';
 })
 export class PublicCompanyController {
     constructor(private readonly companyService: CompanyService) {}
+
+    @MessagePattern('companyById')
+    async getCompanyById(@TransformMessagePayload() { companyId }: { companyId: string }) {
+        return this.companyService.getCompanyById(companyId);
+    }
 
     @Public()
     @Get('/all')
