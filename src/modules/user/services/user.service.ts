@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { addDays } from 'date-fns';
 
 import { PrismaService } from 'src/common/services/prisma.service';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import { AuthSignupByEmailDto, AuthSignupByPhoneDto } from 'src/modules/auth/dtos/auth.signup.dto';
 
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
+import { v4 } from 'uuid';
+import { User, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -18,15 +21,48 @@ export class UserService {
         return this.prismaService.user.findUnique({ where: { email } });
     }
 
-    async updateUser(userId: string, data: UserUpdateDto) {
-        const { firstName, lastName, email, phoneNumber, avatar } = data;
+    async getUserByPhone(phone: string): Promise<UserResponseDto> {
+        return this.prismaService.user.findUnique({
+            where: { phoneNumber: phone },
+        });
+    }
+
+    async findOne(where: Prisma.UserWhereInput): Promise<User | null> {
+        return this.prismaService.user.findFirst({ where });
+    }
+
+    async updateUser(userId: string, data: UserUpdateDto): Promise<User> {
+        const {
+            firstName,
+            lastName,
+            patronymic,
+            email,
+            password,
+            phoneNumber,
+            avatar,
+            verification,
+            verificationExpires,
+            isEmailVerified,
+            isPhoneVerified,
+            loginAttempts,
+            blockExpires,
+        } = data;
+
         return this.prismaService.user.update({
             data: {
                 firstName: firstName?.trim(),
                 lastName: lastName?.trim(),
+                patronymic: patronymic?.trim(),
                 email,
+                password,
                 phoneNumber,
                 avatar,
+                verification,
+                verificationExpires,
+                isEmailVerified,
+                isPhoneVerified,
+                loginAttempts,
+                blockExpires,
             },
             where: {
                 id: userId,
@@ -34,14 +70,33 @@ export class UserService {
         });
     }
 
-    async createUser(data: AuthSignupDto) {
+    async createUserByEmail(data: AuthSignupByEmailDto) {
         return this.prismaService.user.create({
             data: {
                 email: data?.email,
                 password: data?.password,
                 firstName: data?.firstName.trim(),
-                lastName: data?.lastName.trim(),
+                verification: v4(),
                 role: 'USER',
+                isEmailVerified: false,
+                verificationExpires: addDays(new Date(), 1),
+                loginAttempts: 0,
+                blockExpires: null,
+            },
+        });
+    }
+
+    async createUserByPhone(data: AuthSignupByPhoneDto) {
+        return this.prismaService.user.create({
+            data: {
+                email: null,
+                phoneNumber: data?.phone.trim(),
+                firstName: data?.firstName.trim(),
+                role: 'USER',
+                isPhoneVerified: false,
+                verificationExpires: addDays(new Date(), 1),
+                loginAttempts: 0,
+                blockExpires: null,
             },
         });
     }
@@ -58,5 +113,89 @@ export class UserService {
             },
         });
         return;
+    }
+
+    async getUsersByIds(userIds: string[]): Promise<UserResponseDto[]> {
+        return this.prismaService.user.findMany({
+            where: {
+                id: {
+                    in: userIds,
+                },
+            },
+            include: {
+                company: true,
+            },
+        });
+    }
+
+    async getUsersByCompanyId(companyId: string): Promise<UserResponseDto[]> {
+        if (!companyId?.trim()) {
+            return [];
+        }
+
+        const users = await this.prismaService.user.findMany({
+            where: {
+                companyId,
+            },
+        });
+
+        if (!users.length) {
+            throw new NotFoundException(`No users found for companyId "${companyId}"`);
+        }
+
+        return users;
+    }
+
+    async getUsersByOrganizationName(organizationName: string): Promise<UserResponseDto[]> {
+        if (!organizationName?.trim()) {
+            return [];
+        }
+
+        const companies = await this.prismaService.company.findMany({
+            where: {
+                organizationName: {
+                    contains: organizationName,
+                    mode: 'insensitive',
+                },
+            },
+            include: {
+                users: true,
+            },
+        });
+
+        if (!companies.length) {
+            throw new NotFoundException(`No companies found containing "${organizationName}"`);
+        }
+
+        const users = companies.flatMap(company => company.users);
+
+        return users;
+    }
+
+    async updateUserRole(userId: string, role: Role): Promise<User> {
+        const user = await this.prismaService.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException(`User with ID "${userId}" not found`);
+        }
+
+        return this.prismaService.user.update({
+            where: { id: userId },
+            data: { role },
+        });
+    }
+
+    async removeUserFromCompany(userId: string): Promise<User> {
+        const user = await this.prismaService.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with ID "${userId}" not found`);
+        }
+
+        return this.prismaService.user.update({
+            where: { id: userId },
+            data: { companyId: null },
+        });
     }
 }

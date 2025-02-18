@@ -16,6 +16,10 @@ import { AuthJwtAccessStrategy } from './providers/jwt.access.strategy';
 import { AuthJwtRefreshStrategy } from './providers/jwt.refresh.strategy';
 import { HashService } from './services/hash.service';
 import { PrismaService } from './services/prisma.service';
+import { MailService } from './services/mail.service';
+import { HttpModule } from '@nestjs/axios';
+import { CallModule } from 'src/modules/call/call.module';
+import { FlashCallService } from './services/flashCall.service';
 
 @Module({
     imports: [
@@ -26,6 +30,10 @@ import { PrismaService } from './services/prisma.service';
             envFilePath: ['.env'],
             expandVariables: true,
         }),
+        HttpModule.register({
+            timeout: 5000,
+            maxRedirects: 5,
+        }),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         I18nModule.forRoot({
             fallbackLanguage: 'en',
@@ -35,10 +43,13 @@ import { PrismaService } from './services/prisma.service';
             },
             resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
         }),
+        CallModule,
     ],
     providers: [
         PrismaService,
         HashService,
+        MailService,
+        FlashCallService,
         AuthJwtAccessStrategy,
         AuthJwtRefreshStrategy,
         {
@@ -58,7 +69,15 @@ import { PrismaService } from './services/prisma.service';
             useClass: RolesGuard,
         },
     ],
-    exports: [PrismaService, HashService, AuthJwtAccessStrategy, AuthJwtRefreshStrategy],
+    exports: [
+        PrismaService,
+        HashService,
+        AuthJwtAccessStrategy,
+        AuthJwtRefreshStrategy,
+        MailService,
+        FlashCallService,
+        HttpModule,
+    ],
 })
 export class CommonModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {

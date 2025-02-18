@@ -23,6 +23,6 @@ COPY --from=builder /app/prisma /app/prisma
 
 RUN yarn install --production --frozen-lockfile
 
-EXPOSE 9001
+EXPOSE 9005
 
 CMD [ "yarn", "start" ]

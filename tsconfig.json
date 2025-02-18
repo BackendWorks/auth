@@ -19,6 +19,6 @@
         "resolveJsonModule": true,
         "types": ["node", "jest"]
     },
-    "include": ["src", "test"],
-    "exclude": ["node_modules", "dist", "*coverage"]
+    "include": ["src/**/*.ts", "test/**/*.ts"],
+    "exclude": ["node_modules", "dist", "**/*.html", "*coverage"]
 }
