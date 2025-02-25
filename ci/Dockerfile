@@ -1,28 +1,37 @@
-FROM node:20-alpine AS builder
-
+FROM node:lts-alpine AS builder
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-COPY prisma ./prisma
+RUN apk add --no-cache alpine-sdk python3 make g++
 
+# Copy package files
+COPY package.json yarn.lock ./
+COPY prisma ./prisma/
+
+# Install dependencies using yarn
 RUN yarn install --frozen-lockfile
 
+# Copy source files including potential .env
 COPY . .
 
-RUN yarn generate
+# Generate Prisma client
+RUN yarn prisma:generate
 
+# Build the application
 RUN yarn build
 
-FROM node:20-alpine AS production
+FROM node:lts-alpine AS main
 
 WORKDIR /app
 
-COPY --from=builder /app/package.json /app/yarn.lock /app/
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/prisma /app/prisma
+# Copy only necessary files
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/yarn.lock ./
+COPY --from=builder /app/prisma ./prisma
 
-RUN yarn install --production --frozen-lockfile
+# Copy and set permissions for entrypoint
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 
-EXPOSE 9001
-
-CMD [ "yarn", "start" ]
+ENTRYPOINT ["./docker-entrypoint.sh"]

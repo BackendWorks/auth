@@ -1,14 +1,12 @@
 export interface ITokenResponse {
-  accessToken: string;
-  refreshToken: string;
+    accessToken: string;
 }
 
 export interface IAuthPayload {
-  id: string;
-  role: string;
+    id: string;
+    role: string;
 }
 
 export enum TokenType {
-  ACCESS_TOKEN = 'AccessToken',
-  REFRESH_TOKEN = 'RefreshToken',
+    ACCESS_TOKEN = 'AccessToken',
 }

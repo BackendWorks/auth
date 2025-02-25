@@ -1,7 +1,15 @@
 {
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
-  "compilerOptions": {
-    "assets": [{ "include": "languages/**/*", "watchAssets": true }]
-  }
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "compilerOptions": {
+        "plugins": ["@nestjs/swagger"],
+        "assets": [
+            {
+                "include": "languages/**/*",
+                "outDir": "dist"
+            }
+        ],
+        "deleteOutDir": true,
+        "watchAssets": true
+    }
 }

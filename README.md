@@ -1,49 +1,123 @@
-## Description
+# Auth Service
 
-[Nest](https://github.com/nestjs/nest) Microservice framework auth service TypeScript repository.
+## Overview
 
-## Installation
+A robust authentication microservice built with NestJS, providing secure user authentication, authorization, and management.
+
+## Key Features
+
+- JWT-based authentication
+- Role-based access control
+- User registration and management
+- Password hashing
+- Validation and security middleware
+- Internationalization support
+- Comprehensive error handling
+
+## Technology Stack
+
+- NestJS
+- Prisma ORM
+- PostgreSQL
+- Passport.js
+- KafkaJS
+- Sentry for error tracking
+- Swagger for API documentation
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn
+- PostgreSQL
+- Kafka
+
+### Installation
 
 ```bash
-$ yarn
+# Install dependencies
+$ yarn install
+
+# Generate Prisma client
+$ yarn prisma:generate
+
+# Run database migrations
+$ yarn prisma:migrate
 ```
 
-## Running the app
+## Running the Service
 
 ```bash
-# development
+# Development mode
 $ yarn dev
 
-# production mode
+# Production mode
 $ yarn start
 ```
 
-## Database
+## Database Management
 
 ```bash
-# generate schema
-$ yarn generate
+# Generate Prisma schema
+$ yarn prisma:generate
 
-# migrate dev
-$ yarn migrate
+# Run database migrations (development)
+$ yarn prisma:migrate
 
-# migrate prod
-$ yarn migrate:prod
+# Run database migrations (production)
+$ yarn prisma:migrate:prod
+
+# Open Prisma Studio
+$ yarn prisma:studio
 ```
 
-## Test
+## Testing
 
 ```bash
-# unit tests
+# Run unit tests
 $ yarn test
 
-# e2e tests
+# Run end-to-end tests
 $ yarn test:e2e
 
-# test coverage
+# Generate test coverage report
 $ yarn test:cov
 ```
 
-## License
+## Configuration
 
-Nest is [MIT licensed](LICENSE).
+Configuration is managed through environment variables and NestJS ConfigModule.
+
+Key configurations:
+
+- Database connection
+- JWT settings
+- Kafka connection
+- Sentry error tracking
+
+## Security Features
+
+- JWT authentication
+- Password bcrypt hashing
+- Input validation
+- CORS protection
+- Helmet middleware
+- Rate limiting
+- Compression
+
+## Monitoring and Observability
+
+- Sentry error tracking
+- Swagger API documentation
+- Health check endpoints
+- Logging
+
+## Development Workflow
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement changes
+4. Write tests
+5. Run linting and formatting
+6. Submit a pull request

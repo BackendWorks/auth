@@ -1,73 +1,90 @@
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import 'reflect-metadata';
+import { Logger, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Transport } from '@nestjs/microservices';
+import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import express, { Request, Response } from 'express';
+import { useContainer } from 'class-validator';
+import compression from 'compression';
+import express from 'express';
 import helmet from 'helmet';
 
 import { AppModule } from './app/app.module';
-import { setupSwagger } from './swagger';
+import { APP_ENVIRONMENT } from './common/enums/app.enum';
+import setupSwagger from './swagger';
 
-async function bootstrap() {
-  const logger = new Logger();
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(express()),
-    {
-      cors: true,
-    },
-  );
+async function bootstrap(): Promise<void> {
+    try {
+        const app = await NestFactory.create(
+            AppModule,
+            new ExpressAdapter(express()),
+            {
+                bufferLogs: true,
+            },
+        );
 
-  const configService = app.get(ConfigService);
-  const expressApp = app.getHttpAdapter().getInstance();
+        const config = app.get(ConfigService);
+        const logger = app.get(Logger);
+        const env = config.get<string>('app.env');
+        const host = config.get<string>('app.http.host');
+        const port = config.get<number>('app.http.port');
+        const {
+            brokers: kafkaBrokers,
+            clientId: kafkaClientId,
+            consumer: { groupId: consumerGroup },
+        } = config.get('kafka');
 
-  expressApp.get('/', (_req: Request, res: Response) => {
-    res.status(200).json({
-      status: 200,
-      message: `Hello from ${configService.get('app.name')}`,
-      data: {
-        timestamp: new Date(),
-      },
-    });
-  });
+        app.connectMicroservice<MicroserviceOptions>({
+            transport: Transport.KAFKA,
+            options: {
+                client: {
+                    brokers: kafkaBrokers,
+                    clientId: kafkaClientId,
+                    retry: {
+                        retries: 10,
+                        initialRetryTime: 100,
+                        maxRetryTime: 30000,
+                    },
+                },
+                consumer: {
+                    groupId: consumerGroup,
+                    allowAutoTopicCreation: true,
+                    sessionTimeout: 30000,
+                },
+                producer: {
+                    allowAutoTopicCreation: true,
+                },
+                subscribe: {
+                    fromBeginning: true,
+                },
+            },
+        });
 
-  const port: number = configService.get<number>('app.http.port');
-  const host: string = configService.get<string>('app.http.host');
-  const globalPrefix: string = configService.get<string>('app.globalPrefix');
-  const versioningPrefix: string = configService.get<string>(
-    'app.versioning.prefix',
-  );
-  const version: string = configService.get<string>('app.versioning.version');
-  const versionEnable: string = configService.get<string>(
-    'app.versioning.enable',
-  );
-  app.use(helmet());
-  app.useGlobalPipes(new ValidationPipe());
-  app.setGlobalPrefix(globalPrefix);
-  if (versionEnable) {
-    app.enableVersioning({
-      type: VersioningType.URI,
-      defaultVersion: version,
-      prefix: versioningPrefix,
-    });
-  }
-  setupSwagger(app);
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: [`${configService.get('rmq.uri')}`],
-      queue: `${configService.get('rmq.auth')}`,
-      queueOptions: { durable: false },
-      prefetchCount: 1,
-    },
-  });
-  await app.startAllMicroservices();
-  await app.listen(port, host);
-  logger.log(
-    `🚀 ${configService.get(
-      'app.name',
-    )} service started successfully on port ${port}`,
-  );
+        app.use(helmet());
+        app.use(compression());
+        app.enableCors(config.get('app.cors'));
+        app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+        useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
+        if (env !== APP_ENVIRONMENT.PRODUCTION) {
+            setupSwagger(app);
+        }
+
+        await app.startAllMicroservices();
+        await app.listen(port, host);
+
+        logger.log(`🚀 Server: ${await app.getUrl()}`);
+        logger.log(`📖 Docs: ${await app.getUrl()}/docs`);
+        logger.log(`📬 Kafka connected: ${kafkaBrokers}`);
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error(
+            'Bootstrap failed:',
+            error instanceof Error ? error.stack : error,
+        );
+        process.exit(1);
+    }
 }
+
 bootstrap();

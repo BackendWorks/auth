@@ -1,18 +1,19 @@
 import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
+    ConflictException,
+    Injectable,
+    Logger,
+    NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { UserService } from 'src/modules/user/services/user.service';
 
 import {
-  IAuthPayload,
-  ITokenResponse,
-  TokenType,
+    IAuthPayload,
+    ITokenResponse,
+    TokenType,
 } from '../interfaces/auth.interface';
-import { UserService } from '../../user/services/user.service';
-import { HelperHashService } from '../../../common/services/helper.hash.service';
 import { IAuthService } from '../interfaces/auth.service.interface';
 import { AuthResponseDto } from '../dtos/auth.response.dto';
 import { AuthLoginDto } from '../dtos/auth.login.dto';
@@ -20,149 +21,154 @@ import { AuthSignupDto } from '../dtos/auth.signup.dto';
 
 @Injectable()
 export class AuthService implements IAuthService {
-  private readonly accessTokenSecret: string;
-  private readonly refreshTokenSecret: string;
-  private readonly accessTokenExp: string;
-  private readonly refreshTokenExp: string;
+    private readonly accessTokenSecret: string;
+    private readonly accessTokenExp: string;
+    private readonly salt: string;
+    private readonly logger = new Logger(AuthService.name);
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
-    private readonly userService: UserService,
-    private readonly helperHashService: HelperHashService,
-  ) {
-    this.accessTokenSecret = this.configService.get<string>(
-      'auth.accessToken.secret',
-    );
-    this.refreshTokenSecret = this.configService.get<string>(
-      'auth.refreshToken.secret',
-    );
-    this.accessTokenExp = this.configService.get<string>(
-      'auth.accessToken.expirationTime',
-    );
-    this.refreshTokenExp = this.configService.get<string>(
-      'auth.refreshToken.expirationTime',
-    );
-  }
-
-  async verifyToken(accessToken: string): Promise<IAuthPayload> {
-    try {
-      const data = await this.jwtService.verifyAsync(accessToken, {
-        secret: this.accessTokenSecret,
-      });
-
-      return data;
-    } catch (e) {
-      throw e;
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly jwtService: JwtService,
+        private readonly userService: UserService,
+    ) {
+        this.salt = bcrypt.genSaltSync();
+        this.accessTokenSecret = this.configService.get<string>(
+            'auth.accessToken.secret',
+        );
+        this.accessTokenExp = this.configService.get<string>(
+            'auth.accessToken.expirationTime',
+        );
+        this.logger.log('AuthService initialized');
     }
-  }
 
-  async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
-    try {
-      const accessTokenPromise = this.jwtService.signAsync(
-        {
-          id: user.id,
-          role: user.role,
-          tokenType: TokenType.ACCESS_TOKEN,
-        },
-        {
-          secret: this.accessTokenSecret,
-          expiresIn: this.accessTokenExp,
-        },
-      );
-
-      const refreshTokenPromise = this.jwtService.signAsync(
-        {
-          id: user.id,
-          role: user.role,
-          tokenType: TokenType.REFRESH_TOKEN,
-        },
-        {
-          secret: this.refreshTokenSecret,
-          expiresIn: this.refreshTokenExp,
-        },
-      );
-
-      const [accessToken, refreshToken] = await Promise.all([
-        accessTokenPromise,
-        refreshTokenPromise,
-      ]);
-
-      return {
-        accessToken,
-        refreshToken,
-      };
-    } catch (e) {
-      throw e;
+    public createHash(password: string): string {
+        return bcrypt.hashSync(password, this.salt);
     }
-  }
 
-  async login(data: AuthLoginDto): Promise<AuthResponseDto> {
-    try {
-      const { email, password } = data;
-
-      const user = await this.userService.getUserByEmail(email);
-
-      if (!user) {
-        throw new NotFoundException('user.userNotFound');
-      }
-
-      const match = await this.helperHashService.match(user.password, password);
-
-      if (!match) {
-        throw new NotFoundException('user.invalidPassword');
-      }
-
-      const { accessToken, refreshToken } = await this.generateTokens({
-        id: user.id,
-        role: user.role,
-      });
-
-      return {
-        accessToken,
-        refreshToken,
-        user,
-      };
-    } catch (e) {
-      throw e;
+    public match(hash: string, password: string): boolean {
+        return bcrypt.compareSync(password, hash);
     }
-  }
 
-  async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
-    try {
-      const { email, firstName, lastName, password, username } = data;
-      const findByEmail = await this.userService.getUserByEmail(email);
-      const findByUserName = await this.userService.getUserByUserName(username);
-
-      if (findByEmail) {
-        throw new ConflictException('user.userExistsByEmail');
-      }
-
-      if (findByUserName) {
-        throw new ConflictException('user.userExistsByUserName');
-      }
-
-      const passwordHashed = this.helperHashService.createHash(password);
-
-      const createdUser = await this.userService.createUser({
-        email,
-        firstName: firstName?.trim(),
-        lastName: lastName?.trim(),
-        password: passwordHashed,
-        username: username?.trim(),
-      });
-
-      const tokens = await this.generateTokens({
-        id: createdUser.id,
-        role: createdUser.role,
-      });
-
-      return {
-        ...tokens,
-        user: createdUser,
-      };
-    } catch (e) {
-      throw e;
+    async verifyToken(accessToken: string): Promise<IAuthPayload> {
+        try {
+            const data = await this.jwtService.verifyAsync(accessToken, {
+                secret: this.accessTokenSecret,
+            });
+            this.logger.debug(`Token verified for user ID: ${data.id}`);
+            return data;
+        } catch (error) {
+            this.logger.error(`Token verification failed: ${error.message}`);
+            throw error;
+        }
     }
-  }
+
+    async generateToken(user: IAuthPayload): Promise<ITokenResponse> {
+        try {
+            this.logger.debug(`Generating token for user ID: ${user.id}`);
+            const accessToken = await this.jwtService.signAsync(
+                {
+                    id: user.id,
+                    role: user.role,
+                    tokenType: TokenType.ACCESS_TOKEN,
+                },
+                {
+                    secret: this.accessTokenSecret,
+                    expiresIn: this.accessTokenExp,
+                },
+            );
+
+            return {
+                accessToken,
+            };
+        } catch (error) {
+            this.logger.error(`Token generation failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async login(data: AuthLoginDto): Promise<AuthResponseDto> {
+        try {
+            const { email } = data;
+            this.logger.log(`Login attempt for: ${email}`);
+
+            const user = await this.userService.getUserByEmail(email);
+
+            if (!user) {
+                this.logger.warn(`Login failed: User not found - ${email}`);
+                throw new NotFoundException('user.error.notFound');
+            }
+
+            const match = await this.match(user.password, data.password);
+
+            if (!match) {
+                this.logger.warn(`Login failed: Invalid password - ${email}`);
+                throw new NotFoundException('user.error.invalidPassword');
+            }
+
+            const { accessToken } = await this.generateToken({
+                id: user.id,
+                role: user.role,
+            });
+
+            this.logger.log(`User logged in successfully: ${email}`);
+
+            return {
+                accessToken,
+                user,
+            };
+        } catch (error) {
+            this.logger.error(`Login error: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
+        try {
+            const { email, username } = data;
+            this.logger.log(`Signup attempt for: ${email}`);
+
+            const findByEmail = await this.userService.getUserByEmail(email);
+            const findByUserName =
+                await this.userService.getUserByUserName(username);
+
+            if (findByEmail) {
+                this.logger.warn(
+                    `Signup failed: Email already exists - ${email}`,
+                );
+                throw new ConflictException('user.error.exists');
+            }
+
+            if (findByUserName) {
+                this.logger.warn(
+                    `Signup failed: Username already exists - ${username}`,
+                );
+                throw new ConflictException('user.error.usernameExists');
+            }
+
+            const passwordHashed = this.createHash(data.password);
+
+            const createdUser = await this.userService.createUser({
+                email,
+                firstName: data.firstName?.trim(),
+                lastName: data.lastName?.trim(),
+                password: passwordHashed,
+                username: username?.trim(),
+            });
+
+            const { accessToken } = await this.generateToken({
+                id: createdUser.id,
+                role: createdUser.role,
+            });
+
+            this.logger.log(`User created successfully: ${email}`);
+
+            return {
+                accessToken,
+                user: createdUser,
+            };
+        } catch (error) {
+            this.logger.error(`Signup error: ${error.message}`);
+            throw error;
+        }
+    }
 }

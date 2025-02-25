@@ -4,8 +4,8 @@ import { AuthSignupDto } from '../dtos/auth.signup.dto';
 import { IAuthPayload, ITokenResponse } from './auth.interface';
 
 export interface IAuthService {
-  verifyToken(accessToken: string): Promise<IAuthPayload>;
-  generateTokens(user: IAuthPayload): Promise<ITokenResponse>;
-  login(data: AuthLoginDto): Promise<AuthResponseDto>;
-  signup(data: AuthSignupDto): Promise<AuthResponseDto>;
+    verifyToken(accessToken: string): Promise<IAuthPayload>;
+    generateToken(user: IAuthPayload): Promise<ITokenResponse>;
+    login(data: AuthLoginDto): Promise<AuthResponseDto>;
+    signup(data: AuthSignupDto): Promise<AuthResponseDto>;
 }

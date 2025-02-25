@@ -1,59 +1,67 @@
-import { Body, Controller, Get, Put } from '@nestjs/common';
-import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { MessagePattern } from '@nestjs/microservices';
-import { TransformMessagePayload } from 'src/decorators/payload.decorator';
-import { AuthUser } from 'src/decorators/auth.decorator';
-import { AllowedRoles } from 'src/decorators/role.decorator';
-import { Roles } from '@prisma/client';
+import {
+    Body,
+    Controller,
+    Delete,
+    HttpStatus,
+    Param,
+    ParseUUIDPipe,
+    Put,
+} from '@nestjs/common';
+import { ROLE } from '@prisma/client';
+import {
+    ApiBearerAuth,
+    ApiOperation,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
 
-import { UserResponseDto } from '../dtos/user.response.dto';
 import { UserService } from '../services/user.service';
 import { UserUpdateDto } from '../dtos/user.update.dto';
+import { UserResponseDto } from '../dtos/user.response.dto';
+import { UserBulkResponseDto } from '../dtos/user-bulk-response.dto';
+import { UserBulkRequestDto } from '../dtos/user-bulk-request.dto';
 
-@ApiTags('user.user')
+import { MessageKey } from '@/common/decorators/message.decorator';
+import { AllowedRoles } from '@/common/decorators/request-role.decorator';
+import { SwaggerResponse } from '@/common/dtos/base-response.dto';
+
+@ApiTags('users')
 @Controller({
-  version: '1',
-  path: '/user',
+    version: '1',
+    path: '/user',
 })
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) {}
 
-  @MessagePattern('getUserById')
-  public async getUserById(
-    @TransformMessagePayload() payload: Record<string, string>,
-  ) {
-    return this.userService.getUserById(payload.userId);
-  }
+    @Put(':id')
+    @ApiBearerAuth('accessToken')
+    @MessageKey('user.success.updated')
+    @ApiOperation({ summary: 'Update user details' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'User updated successfully',
+        type: SwaggerResponse(UserResponseDto),
+    })
+    async updateUser(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() updateUserDto: UserUpdateDto,
+    ): Promise<UserResponseDto> {
+        return this.userService.updateUser(id, updateUserDto);
+    }
 
-  @MessagePattern('getUserByEmail')
-  public async getUserByEmail(
-    @TransformMessagePayload() payload: Record<string, string>,
-  ) {
-    return this.userService.getUserByEmail(payload.userName);
-  }
-
-  @MessagePattern('getUserByUserName')
-  public async getUserByUserName(
-    @TransformMessagePayload() payload: Record<string, string>,
-  ) {
-    return this.userService.getUserByUserName(payload.userName);
-  }
-
-  @ApiBearerAuth('accessToken')
-  @Put()
-  @AllowedRoles([Roles.User, Roles.Admin])
-  updateUser(
-    @AuthUser() user: IAuthPayload,
-    @Body() data: UserUpdateDto,
-  ): Promise<UserResponseDto> {
-    return this.userService.updateUser(user.id, data);
-  }
-
-  @ApiBearerAuth('accessToken')
-  @Get('profile')
-  @AllowedRoles([Roles.User, Roles.Admin])
-  getUserInfo(@AuthUser() user: IAuthPayload): Promise<UserResponseDto> {
-    return this.userService.getUserById(user.id);
-  }
+    @Delete('batch')
+    @ApiBearerAuth('accessToken')
+    @MessageKey('user.success.deleted')
+    @AllowedRoles([ROLE.Admin])
+    @ApiOperation({ summary: 'Batch delete users' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Users deleted successfully',
+        type: SwaggerResponse(UserBulkResponseDto),
+    })
+    async softDeleteUsers(
+        @Body() body: UserBulkRequestDto,
+    ): Promise<UserBulkResponseDto> {
+        return this.userService.softDeleteUsers(body.ids);
+    }
 }
