@@ -13,7 +13,7 @@ RUN yarn generate
 
 RUN yarn build
 
-FROM node:20-alpine AS production
+FROM node:lts-alpine AS production
 
 WORKDIR /app
 

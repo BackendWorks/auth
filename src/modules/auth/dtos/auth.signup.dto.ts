@@ -10,7 +10,7 @@ export class AuthSignupDto {
     @IsEmail()
     @IsString()
     @IsNotEmpty()
-    public email: string;
+    email!: string;
 
     @ApiProperty({
         example: faker.internet.password(),
@@ -19,7 +19,7 @@ export class AuthSignupDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(8)
-    public password: string;
+    password!: string;
 
     @ApiProperty({
         example: faker.person.firstName(),
@@ -27,7 +27,7 @@ export class AuthSignupDto {
     })
     @IsString()
     @IsOptional()
-    public firstName?: string;
+    firstName?: string;
 
     @ApiProperty({
         example: faker.person.lastName(),
@@ -35,7 +35,7 @@ export class AuthSignupDto {
     })
     @IsString()
     @IsOptional()
-    public lastName?: string;
+    lastName?: string;
 
     @ApiProperty({
         example: faker.internet.username(),
@@ -43,5 +43,5 @@ export class AuthSignupDto {
     })
     @IsString()
     @IsOptional()
-    public username?: string;
+    username?: string;
 }

@@ -1,13 +1,16 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { Transport } from '@nestjs/microservices';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import express, { Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 
 import { AppModule } from './app/app.module';
 import { setupSwagger } from './swagger';
+import type { MicroserviceOptions} from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 async function bootstrap() {
     const logger = new Logger();
@@ -26,30 +29,31 @@ async function bootstrap() {
         });
     });
 
-    const port: number = configService.get<number>('app.http.port');
-    const host: string = configService.get<string>('app.http.host');
-    const globalPrefix: string = configService.get<string>('app.globalPrefix');
-    const versioningPrefix: string = configService.get<string>('app.versioning.prefix');
-    const version: string = configService.get<string>('app.versioning.version');
-    const versionEnable: string = configService.get<string>('app.versioning.enable');
+    const port = configService.get<number>('app.http.port') ?? 9001;
+    const host = configService.get<string>('app.http.host') ?? 'localhost';
+    const globalPrefix = configService.get<string>('app.globalPrefix');
+    const versioningPrefix = configService.get<string>('app.versioning.prefix');
+    const version = configService.get<string>('app.versioning.version');
+    const versionEnable = configService.get<string>('app.versioning.enable');
+    const grpcUrl = configService.get<string>('grpc.url');
+    const grpcPackage = configService.get<string>('grpc.package');
     app.use(helmet());
     app.useGlobalPipes(new ValidationPipe());
-    app.setGlobalPrefix(globalPrefix);
+    app.setGlobalPrefix(globalPrefix ?? 'api');
     if (versionEnable) {
         app.enableVersioning({
             type: VersioningType.URI,
-            defaultVersion: version,
-            prefix: versioningPrefix,
+            defaultVersion: version ?? '1',
+            prefix: versioningPrefix ?? 'v',
         });
     }
     setupSwagger(app);
-    app.connectMicroservice({
-        transport: Transport.RMQ,
+    await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+        transport: Transport.GRPC,
         options: {
-            urls: [`${configService.get('rmq.uri')}`],
-            queue: `${configService.get('rmq.auth')}`,
-            queueOptions: { durable: false },
-            prefetchCount: 1,
+            package: grpcPackage,
+            protoPath: join(__dirname, './protos/auth.proto'),
+            url: grpcUrl,
         },
     });
     await app.startAllMicroservices();

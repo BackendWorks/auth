@@ -1,7 +1,7 @@
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
+import type { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
 
-import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
-import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
+import type { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
+import type { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
 
 export interface IUserService {
     updateUser(userId: number, data: UserUpdateDto): Promise<UserResponseDto>;

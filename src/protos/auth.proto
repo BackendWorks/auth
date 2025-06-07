@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package auth;
+
+// User service definition
+service AuthService {
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+// Request message for ValidateToken
+message ValidateTokenRequest {
+  string token = 1; // The JWT token to validate
+}
+
+message ValidateTokenResponse {
+  bool success = 1; // Indicates if the token is valid
+  ValidateTokenResponsePayload payload = 2; // Contains user information if the token is valid
+}
+
+message ValidateTokenResponsePayload {
+  string id = 1; // User ID
+  string role = 2; // User email
+}

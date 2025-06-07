@@ -10,7 +10,7 @@ export class AuthLoginDto {
     @IsEmail()
     @IsString()
     @IsNotEmpty()
-    public email: string;
+    email!: string;
 
     @ApiProperty({
         example: faker.internet.password(),
@@ -19,5 +19,5 @@ export class AuthLoginDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(8)
-    public password: string;
+    password!: string;
 }

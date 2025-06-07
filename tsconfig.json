@@ -7,7 +7,8 @@
         "experimentalDecorators": true,
         "allowSyntheticDefaultImports": true,
         "useDefineForClassFields": false,
-        "target": "ESNext",
+        "target": "ES2022",
+        "lib": ["ES2022"],
         "sourceMap": true,
         "outDir": "./dist",
         "baseUrl": "./",
@@ -17,8 +18,17 @@
         "esModuleInterop": true,
         "moduleResolution": "node",
         "resolveJsonModule": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
         "types": ["node", "jest"]
     },
-    "include": ["src", "test"],
-    "exclude": ["node_modules", "dist", "*coverage"]
+    "include": ["src/**/*", "test/**/*"],
+    "exclude": ["node_modules", "dist", "coverage", "**/*.spec.ts", "**/*.test.ts"]
 }

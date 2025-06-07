@@ -5,8 +5,9 @@ import { PassportModule } from '@nestjs/passport';
 import { CommonModule } from 'src/common/common.module';
 import { UserService } from 'src/modules/user/services/user.service';
 
-import { PublicAuthController } from './controllers/auth.public.controller';
+import { AuthPublicController } from './controllers/auth.public.controller';
 import { AuthService } from './services/auth.service';
+import { AuthGrpcController } from './controllers/auth.grpc.controller';
 
 @Module({
     imports: [
@@ -16,7 +17,7 @@ import { AuthService } from './services/auth.service';
         }),
         JwtModule.register({}),
     ],
-    controllers: [PublicAuthController],
+    controllers: [AuthPublicController, AuthGrpcController],
     providers: [AuthService, UserService],
     exports: [AuthService],
 })

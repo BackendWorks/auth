@@ -28,22 +28,18 @@ export class AuthService implements IAuthService {
         private readonly userService: UserService,
         private readonly hashService: HashService,
     ) {
-        this.accessTokenSecret = this.configService.get<string>('auth.accessToken.secret');
-        this.refreshTokenSecret = this.configService.get<string>('auth.refreshToken.secret');
-        this.accessTokenExp = this.configService.get<string>('auth.accessToken.expirationTime');
-        this.refreshTokenExp = this.configService.get<string>('auth.refreshToken.expirationTime');
+        this.accessTokenSecret = this.configService.get<string>('auth.accessToken.secret') ?? '';
+        this.refreshTokenSecret = this.configService.get<string>('auth.refreshToken.secret') ?? '';
+        this.accessTokenExp = this.configService.get<string>('auth.accessToken.expirationTime') ?? '';
+        this.refreshTokenExp = this.configService.get<string>('auth.refreshToken.expirationTime') ?? '';
     }
 
     async verifyToken(accessToken: string): Promise<IAuthPayload> {
-        try {
-            const data = await this.jwtService.verifyAsync(accessToken, {
-                secret: this.accessTokenSecret,
-            });
+        const data = await this.jwtService.verifyAsync<IAuthPayload>(accessToken, {
+            secret: this.accessTokenSecret,
+        });
 
-            return data;
-        } catch (e) {
-            throw e;
-        }
+        return data;
     }
 
     async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
@@ -83,65 +79,61 @@ export class AuthService implements IAuthService {
     }
 
     async login(data: AuthLoginDto): Promise<AuthResponseDto> {
-        try {
-            const { email, password } = data;
+        const { email, password } = data;
 
-            const user = await this.userService.getUserByEmail(email);
+        const user = await this.userService.getUserByEmail(email);
 
-            if (!user) {
-                throw new NotFoundException('user.userNotFound');
-            }
-
-            const match = this.hashService.match(user.password, password);
-
-            if (!match) {
-                throw new NotFoundException('user.invalidPassword');
-            }
-
-            const { accessToken, refreshToken } = await this.generateTokens({
-                id: user.id,
-                role: user.role,
-            });
-
-            return {
-                accessToken,
-                refreshToken,
-                user,
-            };
-        } catch (e) {
-            throw e;
+        if (!user) {
+            throw new NotFoundException('user.userNotFound');
         }
+
+        const match = this.hashService.match(user.password, password);
+
+        if (!match) {
+            throw new NotFoundException('user.invalidPassword');
+        }
+
+        const { accessToken, refreshToken } = await this.generateTokens({
+            id: user.id,
+            role: user.role,
+        });
+
+        return {
+            accessToken,
+            refreshToken,
+            user,
+        };
     }
 
     async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
-        try {
-            const { email, firstName, lastName, password } = data;
-            const findByEmail = await this.userService.getUserByEmail(email);
+        const { email, firstName, lastName, password } = data;
+        const findByEmail = await this.userService.getUserByEmail(email);
 
-            if (findByEmail) {
-                throw new ConflictException('user.userExistsByEmail');
-            }
-
-            const passwordHashed = this.hashService.createHash(password);
-
-            const createdUser = await this.userService.createUser({
-                email,
-                firstName: firstName?.trim(),
-                lastName: lastName?.trim(),
-                password: passwordHashed,
-            });
-
-            const tokens = await this.generateTokens({
-                id: createdUser.id,
-                role: createdUser.role,
-            });
-
-            return {
-                ...tokens,
-                user: createdUser,
-            };
-        } catch (e) {
-            throw e;
+        if (findByEmail) {
+            throw new ConflictException('user.userExistsByEmail');
         }
+
+        const passwordHashed = this.hashService.createHash(password);
+
+        const createdUser = await this.userService.createUser({
+            email,
+            firstName: firstName ?? '',
+            lastName: lastName ?? '',
+            password: passwordHashed,
+        });
+
+        if (!createdUser || !createdUser.id || !createdUser.role) {
+            throw new Error('Failed to create user');
+        }
+
+        const tokens = await this.generateTokens({
+            id: createdUser.id,
+            role: createdUser.role,
+        });
+
+        return {
+            ...tokens,
+            user: createdUser,
+        };
     }
 }

@@ -2,7 +2,8 @@ import { Controller, Delete, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
-import { AllowedRoles } from 'src/common/decorators/role.decorator';
+import { AllowedRoles } from 'src/common/decorators/auth-roles.decorator';
+import { MessageKey } from 'src/common/decorators/message.decorator';
 
 import { UserService } from 'src/modules/user/services/user.service';
 
@@ -19,8 +20,9 @@ export class AdminUserController {
         name: 'id',
         type: 'string',
     })
-    @Delete(':id')
     @AllowedRoles([Role.ADMIN])
+    @MessageKey('user.success.delete')
+    @Delete(':id')
     deleteUser(@Param('id') id: string): Promise<void> {
         return this.userService.softDeleteUsers([id]);
     }

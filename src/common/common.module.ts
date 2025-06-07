@@ -7,15 +7,15 @@ import { PassportModule } from '@nestjs/passport';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 
 import configs from './config';
-import { HttpExceptionFilter } from './filters/exception.filter';
 import { AuthJwtAccessGuard } from './guards/jwt.access.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
-import { LoggingMiddleware } from './middlewares/logging.middleware';
 import { AuthJwtAccessStrategy } from './providers/jwt.access.strategy';
 import { AuthJwtRefreshStrategy } from './providers/jwt.refresh.strategy';
 import { HashService } from './services/hash.service';
-import { PrismaService } from './services/prisma.service';
+import { DatabaseService } from './services/database.service';
+import { ResponseExceptionFilter } from './filters/exception.filter';
+import { RequestMiddleware } from './middlewares/request.middleware';
 
 @Module({
     imports: [
@@ -37,7 +37,7 @@ import { PrismaService } from './services/prisma.service';
         }),
     ],
     providers: [
-        PrismaService,
+        DatabaseService,
         HashService,
         AuthJwtAccessStrategy,
         AuthJwtRefreshStrategy,
@@ -47,7 +47,7 @@ import { PrismaService } from './services/prisma.service';
         },
         {
             provide: APP_FILTER,
-            useClass: HttpExceptionFilter,
+            useClass: ResponseExceptionFilter,
         },
         {
             provide: APP_GUARD,
@@ -58,10 +58,10 @@ import { PrismaService } from './services/prisma.service';
             useClass: RolesGuard,
         },
     ],
-    exports: [PrismaService, HashService, AuthJwtAccessStrategy, AuthJwtRefreshStrategy],
+    exports: [DatabaseService, HashService, AuthJwtAccessStrategy, AuthJwtRefreshStrategy],
 })
 export class CommonModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
-        consumer.apply(LoggingMiddleware).forRoutes('*');
+        consumer.apply(RequestMiddleware).forRoutes('*');
     }
 }

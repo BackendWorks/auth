@@ -3,7 +3,7 @@ import { HealthIndicatorResult } from '@nestjs/terminus';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class DatabaseService extends PrismaClient implements OnModuleInit {
     async onModuleInit() {
         await this.$connect();
     }
@@ -16,8 +16,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
                     status: 'up',
                 },
             });
-        } catch (error) {
-            console.error(error);
+        } catch {
             return Promise.resolve({
                 prisma: {
                     status: 'down',
