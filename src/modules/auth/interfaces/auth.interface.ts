@@ -6,6 +6,7 @@ export interface ITokenResponse {
 export interface IAuthPayload {
     id: string;
     role: string;
+    tokenType?: TokenType;
 }
 
 export enum TokenType {

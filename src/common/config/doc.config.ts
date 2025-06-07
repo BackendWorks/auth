@@ -1,11 +1,12 @@
 import { registerAs } from '@nestjs/config';
+import { IDocConfig } from '../interfaces/config.interface';
 
 export default registerAs(
     'doc',
-    (): Record<string, string> => ({
-        name: `${process.env.APP_NAME} APIs Specification`,
-        description: `${process.env.APP_NAME} APIs Description`,
-        version: '1.0',
-        prefix: '/docs',
+    (): IDocConfig => ({
+        name: `${process.env.APP_NAME || 'NestJS Auth Service'} API Documentation`,
+        description: `Comprehensive API documentation for ${process.env.APP_NAME || 'NestJS Auth Service'}`,
+        version: process.env.API_VERSION || '1.0.0',
+        prefix: process.env.DOC_PREFIX || '/docs',
     }),
 );

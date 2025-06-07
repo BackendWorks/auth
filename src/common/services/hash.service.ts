@@ -1,19 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class HashService {
-    private readonly salt: string;
+    private readonly logger = new Logger(HashService.name);
+    private readonly saltRounds = 12;
 
-    constructor() {
-        this.salt = bcrypt.genSaltSync();
+    createHash(password: string): string {
+        try {
+            return bcrypt.hashSync(password, this.saltRounds);
+        } catch (error) {
+            this.logger.error('Failed to create hash', error);
+            throw new Error('Hash creation failed');
+        }
     }
 
-    public createHash(password: string): string {
-        return bcrypt.hashSync(password, this.salt);
+    match(hash: string, password: string): boolean {
+        try {
+            return bcrypt.compareSync(password, hash);
+        } catch (error) {
+            this.logger.error('Failed to compare hash', error);
+            return false;
+        }
     }
 
-    public match(hash: string, password: string): boolean {
-        return bcrypt.compareSync(password, hash);
+    async createHashAsync(password: string): Promise<string> {
+        try {
+            return await bcrypt.hash(password, this.saltRounds);
+        } catch (error) {
+            this.logger.error('Failed to create hash async', error);
+            throw new Error('Hash creation failed');
+        }
+    }
+
+    async matchAsync(hash: string, password: string): Promise<boolean> {
+        try {
+            return await bcrypt.compare(password, hash);
+        } catch (error) {
+            this.logger.error('Failed to compare hash async', error);
+            return false;
+        }
     }
 }

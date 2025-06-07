@@ -1,37 +1,50 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 
-import { AuthUser } from 'src/common/decorators/auth-user.decorator';
-import { AllowedRoles } from 'src/common/decorators/auth-roles.decorator';
-import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
+import { UserAuthService } from '../services/user.auth.service';
+import { UserAndAdmin } from 'src/common/decorators/auth.roles.decorator';
+import { MessageKey } from 'src/common/decorators/message.decorator';
+import { AuthUser } from 'src/common/decorators/auth.user.decorator';
+import { SwaggerResponse } from 'src/common/dtos/api-response.dto';
 
-import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
-import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
-import { UserService } from 'src/modules/user/services/user.service';
+import { UserResponseDto } from '../dtos/user.response.dto';
+import { UserUpdateDto } from '../dtos/user.update.dto';
 
-@ApiTags('auth.user')
-@Controller({
-    version: '1',
-    path: '/user',
-})
-export class AuthUserController {
-    constructor(private readonly userService: UserService) {}
+@ApiTags('user.auth')
+@Controller({ version: '1', path: '/user' })
+export class UserAuthController {
+    constructor(private readonly userAuthService: UserAuthService) {}
 
-    @ApiBearerAuth('accessToken')
-    @AllowedRoles([Role.USER, Role.ADMIN])
-    @Put()
-    updateUser(
-        @AuthUser() user: IAuthPayload,
-        @Body() data: UserUpdateDto,
-    ): Promise<UserResponseDto> {
-        return this.userService.updateUser(user.id, data);
+    @UserAndAdmin()
+    @Get('profile')
+    @MessageKey('user.success.get', UserResponseDto)
+    @ApiOperation({
+        summary: 'Get user profile',
+        description: 'Retrieve current user profile information',
+    })
+    @ApiOkResponse({
+        description: 'User profile successfully retrieved',
+        type: SwaggerResponse(UserResponseDto),
+    })
+    async getUserProfile(@AuthUser('id') userId: string): Promise<UserResponseDto> {
+        return this.userAuthService.getUserProfile(userId);
     }
 
-    @ApiBearerAuth('accessToken')
-    @AllowedRoles([Role.USER, Role.ADMIN])
-    @Get('profile')
-    getUserInfo(@AuthUser() user: IAuthPayload): Promise<UserResponseDto> {
-        return this.userService.getUserById(user.id);
+    @UserAndAdmin()
+    @Put('profile')
+    @MessageKey('user.success.update', UserResponseDto)
+    @ApiOperation({
+        summary: 'Update user profile',
+        description: 'Update current user profile information',
+    })
+    @ApiOkResponse({
+        description: 'User profile successfully updated',
+        type: SwaggerResponse(UserResponseDto),
+    })
+    async updateUserProfile(
+        @AuthUser('id') userId: string,
+        @Body() updateDto: UserUpdateDto,
+    ): Promise<UserResponseDto> {
+        return this.userAuthService.updateUserProfile(userId, updateDto);
     }
 }

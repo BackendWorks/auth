@@ -1,51 +1,50 @@
-import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEmail, Matches } from 'class-validator';
+import { IsOptional, IsString, IsEmail, Matches, IsUrl } from 'class-validator';
 
 export class UserUpdateDto {
     @ApiProperty({
-        example: faker.internet.email(),
-        description: 'Email address of the user',
+        description: 'User email address',
         required: false,
+        format: 'email',
     })
-    @IsEmail()
     @IsOptional()
+    @IsEmail()
     email?: string;
 
     @ApiProperty({
-        example: faker.phone.number(),
-        description: 'Phone number of the user',
+        description: 'User phone number (international format)',
         required: false,
+        pattern: '^\\+?[1-9]\\d{1,14}$',
     })
-    @IsString()
-    @Matches(/^\+?[1-9]\d{1,14}$/)
     @IsOptional()
+    @IsString()
+    @Matches(/^\+?[1-9]\d{1,14}$/, {
+        message: 'Phone number must be in valid international format',
+    })
     phoneNumber?: string;
 
     @ApiProperty({
-        example: faker.person.firstName(),
-        description: 'First name of the user',
+        description: 'User first name',
         required: false,
     })
-    @IsString()
     @IsOptional()
+    @IsString()
     firstName?: string;
 
     @ApiProperty({
-        example: faker.person.lastName(),
-        description: 'Last name of the user',
+        description: 'User last name',
         required: false,
     })
-    @IsString()
     @IsOptional()
+    @IsString()
     lastName?: string;
 
     @ApiProperty({
-        example: faker.image.avatar(),
-        description: "User's profile picture URL",
+        description: 'User profile picture URL',
         required: false,
+        format: 'uri',
     })
-    @IsString()
     @IsOptional()
+    @IsUrl()
     avatar?: string;
 }

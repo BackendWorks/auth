@@ -10,7 +10,7 @@ import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { UserResponseDto } from 'src/modules/user/dtos/user.response.dto';
-import { UserService } from 'src/modules/user/services/user.service';
+import { UserService } from 'src/modules/user/services/user.auth.service';
 
 describe('AuthService', () => {
     let authService: AuthService;

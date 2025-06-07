@@ -4,17 +4,18 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-vali
 
 export class AuthSignupDto {
     @ApiProperty({
+        description: 'User email address',
         example: faker.internet.email(),
-        description: 'The email address of the user',
+        format: 'email',
     })
     @IsEmail()
-    @IsString()
     @IsNotEmpty()
     email!: string;
 
     @ApiProperty({
-        example: faker.internet.password(),
-        description: 'The password of the user',
+        description: 'User password (minimum 8 characters)',
+        example: faker.internet.password({ length: 12 }),
+        minLength: 8,
     })
     @IsString()
     @IsNotEmpty()
@@ -22,26 +23,20 @@ export class AuthSignupDto {
     password!: string;
 
     @ApiProperty({
+        description: 'User first name',
         example: faker.person.firstName(),
-        description: 'The first name of the user',
+        required: false,
     })
     @IsString()
     @IsOptional()
     firstName?: string;
 
     @ApiProperty({
+        description: 'User last name',
         example: faker.person.lastName(),
-        description: 'The last name of the user',
+        required: false,
     })
     @IsString()
     @IsOptional()
     lastName?: string;
-
-    @ApiProperty({
-        example: faker.internet.username(),
-        description: 'The username of the user',
-    })
-    @IsString()
-    @IsOptional()
-    username?: string;
 }

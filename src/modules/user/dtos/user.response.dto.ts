@@ -1,79 +1,73 @@
-import { faker } from '@faker-js/faker';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { $Enums, User } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class UserResponseDto implements User {
     @ApiProperty({
-        description: 'Unique identifier for the user',
-        example: faker.string.uuid(),
+        description: 'Unique user identifier',
+        format: 'uuid',
     })
     id: string;
 
     @ApiProperty({
-        description: 'Email address of the user',
-        example: faker.internet.email(),
+        description: 'User email address',
+        format: 'email',
     })
     email: string;
 
     @ApiProperty({
-        description: 'First name of the user',
-        example: faker.person.firstName(),
+        description: 'User first name',
     })
     firstName: string;
 
     @ApiProperty({
-        description: 'Last name of the user',
-        example: faker.person.lastName(),
+        description: 'User last name',
     })
     lastName: string;
 
     @ApiProperty({
-        description: 'Phone number of the user',
-        example: faker.phone.number(),
+        description: 'User phone number',
+        nullable: true,
     })
-    phoneNumber: string;
+    phoneNumber: string | null;
 
     @ApiProperty({
-        description: "URL of the user's profile picture",
-        example: faker.image.avatar(),
-        required: false,
+        description: 'User profile picture URL',
+        nullable: true,
     })
-    avatar: string;
+    avatar: string | null;
 
     @ApiProperty({
-        description: "Indicates if the user's email is verified",
-        example: true,
+        description: 'Email verification status',
     })
     isVerified: boolean;
 
     @ApiProperty({
-        description: 'Role of the user in the system',
+        description: 'User role in the system',
         enum: $Enums.Role,
-        example: $Enums.Role.USER,
     })
     role: $Enums.Role;
 
     @ApiProperty({
-        description: 'The date and time when the user was created',
-        example: faker.date.past().toISOString(),
+        description: 'Account creation timestamp',
+        format: 'date-time',
     })
     createdAt: Date;
 
     @ApiProperty({
-        description: 'The date and time when the user information was last updated',
-        example: faker.date.recent().toISOString(),
+        description: 'Last profile update timestamp',
+        format: 'date-time',
     })
     updatedAt: Date;
 
     @ApiProperty({
-        description: 'The date and time when the user was deleted, if applicable',
-        example: null,
-        required: false,
+        description: 'Account deletion timestamp',
         nullable: true,
+        format: 'date-time',
     })
     deletedAt: Date | null;
 
     @Exclude()
+    @ApiHideProperty()
     password: string;
 }

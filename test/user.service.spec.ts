@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/common/services/database.service';
 import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
 import { UserUpdateDto } from 'src/modules/user/dtos/user.update.dto';
-import { UserService } from 'src/modules/user/services/user.service';
+import { UserService } from 'src/modules/user/services/user.auth.service';
 
 describe('UserService', () => {
     let service: UserService;

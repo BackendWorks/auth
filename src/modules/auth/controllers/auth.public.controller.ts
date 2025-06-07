@@ -1,44 +1,69 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { AuthUser } from 'src/common/decorators/auth-user.decorator';
+import { AuthUser } from 'src/common/decorators/auth.user.decorator';
 import { MessageKey } from 'src/common/decorators/message.decorator';
 import { PublicRoute } from 'src/common/decorators/public.decorator';
-
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';
-import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
-import { AuthRefreshResponseDto, AuthResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
-import { IAuthPayload } from 'src/modules/auth/interfaces/auth.interface';
-import { AuthService } from 'src/modules/auth/services/auth.service';
+import { SwaggerResponse } from 'src/common/dtos/api-response.dto';
 
-@ApiTags('public.auth')
-@Controller({
-    version: '1',
-    path: '/auth',
-})
+import { AuthLoginDto } from '../dtos/auth.login.dto';
+import { AuthRefreshResponseDto, AuthResponseDto } from '../dtos/auth.response.dto';
+import { AuthSignupDto } from '../dtos/auth.signup.dto';
+import { IAuthPayload } from '../interfaces/auth.interface';
+import { AuthService } from '../services/auth.service';
+
+@ApiTags('auth.public')
+@Controller({ version: '1', path: '/auth' })
 export class AuthPublicController {
     constructor(private readonly authService: AuthService) {}
 
     @PublicRoute()
     @Post('login')
-    @MessageKey('auth.success.login')
-    public login(@Body() payload: AuthLoginDto): Promise<AuthResponseDto> {
+    @MessageKey('auth.success.login', AuthResponseDto)
+    @ApiOperation({
+        summary: 'User login',
+        description: 'Authenticate user with email and password',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'User successfully authenticated',
+        type: SwaggerResponse(AuthResponseDto),
+    })
+    login(@Body() payload: AuthLoginDto): Promise<AuthResponseDto> {
         return this.authService.login(payload);
     }
 
     @PublicRoute()
     @Post('signup')
-    @MessageKey('auth.success.signup')
-    public signup(@Body() payload: AuthSignupDto): Promise<AuthResponseDto> {
+    @MessageKey('auth.success.signup', AuthResponseDto)
+    @ApiOperation({
+        summary: 'User registration',
+        description: 'Create a new user account',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'User successfully created and authenticated',
+        type: SwaggerResponse(AuthResponseDto),
+    })
+    signup(@Body() payload: AuthSignupDto): Promise<AuthResponseDto> {
         return this.authService.signup(payload);
     }
 
     @UseGuards(AuthJwtRefreshGuard)
     @PublicRoute()
     @Get('refresh')
-    @MessageKey('auth.success.refresh')
-    public refreshTokens(@AuthUser() user: IAuthPayload): Promise<AuthRefreshResponseDto> {
+    @MessageKey('auth.success.refresh', AuthRefreshResponseDto)
+    @ApiOperation({
+        summary: 'Refresh tokens',
+        description: 'Generate new access and refresh tokens using refresh token',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Tokens successfully refreshed',
+        type: SwaggerResponse(AuthRefreshResponseDto),
+    })
+    refreshTokens(@AuthUser() user: IAuthPayload): Promise<AuthRefreshResponseDto> {
         return this.authService.generateTokens(user);
     }
 }

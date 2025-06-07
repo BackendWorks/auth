@@ -1,9 +1,12 @@
 import { registerAs } from '@nestjs/config';
+import { IGrpcConfig } from '../interfaces/config.interface';
 
-export default registerAs(
-    'grpc',
-    (): Record<string, string> => ({
-        url: process.env.GRPC_URL,
-        package: process.env.GRPC_PACKAGE 
-    }),
-);
+export default registerAs('grpc', (): IGrpcConfig => {
+    const grpcUrl = process.env.GRPC_URL;
+    const grpcPackage = process.env.GRPC_PACKAGE;
+
+    return {
+        url: grpcUrl,
+        package: grpcPackage || 'auth',
+    };
+});

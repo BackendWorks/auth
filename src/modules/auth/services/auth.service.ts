@@ -3,20 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { HashService } from 'src/common/services/hash.service';
-import { UserService } from 'src/modules/user/services/user.service';
 
-import { AuthLoginDto } from 'src/modules/auth/dtos/auth.login.dto';
-import { AuthResponseDto } from 'src/modules/auth/dtos/auth.response.dto';
-import { AuthSignupDto } from 'src/modules/auth/dtos/auth.signup.dto';
-import {
-    IAuthPayload,
-    ITokenResponse,
-    TokenType,
-} from 'src/modules/auth/interfaces/auth.interface';
-import { IAuthService } from 'src/modules/auth/interfaces/auth.service.interface';
+import { AuthLoginDto } from '../dtos/auth.login.dto';
+import { AuthResponseDto } from '../dtos/auth.response.dto';
+import { AuthSignupDto } from '../dtos/auth.signup.dto';
+import { IAuthPayload, ITokenResponse, TokenType } from '../interfaces/auth.interface';
+import { UserAuthService } from 'src/modules/user/services/user.auth.service';
 
 @Injectable()
-export class AuthService implements IAuthService {
+export class AuthService {
     private readonly accessTokenSecret: string;
     private readonly refreshTokenSecret: string;
     private readonly accessTokenExp: string;
@@ -25,104 +20,73 @@ export class AuthService implements IAuthService {
     constructor(
         private readonly configService: ConfigService,
         private readonly jwtService: JwtService,
-        private readonly userService: UserService,
         private readonly hashService: HashService,
+        private readonly userAuthService: UserAuthService,
     ) {
         this.accessTokenSecret = this.configService.get<string>('auth.accessToken.secret') ?? '';
         this.refreshTokenSecret = this.configService.get<string>('auth.refreshToken.secret') ?? '';
-        this.accessTokenExp = this.configService.get<string>('auth.accessToken.expirationTime') ?? '';
-        this.refreshTokenExp = this.configService.get<string>('auth.refreshToken.expirationTime') ?? '';
+        this.accessTokenExp =
+            this.configService.get<string>('auth.accessToken.expirationTime') ?? '';
+        this.refreshTokenExp =
+            this.configService.get<string>('auth.refreshToken.expirationTime') ?? '';
     }
 
     async verifyToken(accessToken: string): Promise<IAuthPayload> {
-        const data = await this.jwtService.verifyAsync<IAuthPayload>(accessToken, {
+        return await this.jwtService.verifyAsync<IAuthPayload>(accessToken, {
             secret: this.accessTokenSecret,
         });
-
-        return data;
     }
 
     async generateTokens(user: IAuthPayload): Promise<ITokenResponse> {
-        const accessTokenPromise = this.jwtService.signAsync(
-            {
-                id: user.id,
-                role: user.role,
-                tokenType: TokenType.ACCESS_TOKEN,
-            },
-            {
-                secret: this.accessTokenSecret,
-                expiresIn: this.accessTokenExp,
-            },
-        );
-
-        const refreshTokenPromise = this.jwtService.signAsync(
-            {
-                id: user.id,
-                role: user.role,
-                tokenType: TokenType.REFRESH_TOKEN,
-            },
-            {
-                secret: this.refreshTokenSecret,
-                expiresIn: this.refreshTokenExp,
-            },
-        );
-
         const [accessToken, refreshToken] = await Promise.all([
-            accessTokenPromise,
-            refreshTokenPromise,
+            this.jwtService.signAsync(
+                { id: user.id, role: user.role, tokenType: TokenType.ACCESS_TOKEN },
+                { secret: this.accessTokenSecret, expiresIn: this.accessTokenExp },
+            ),
+            this.jwtService.signAsync(
+                { id: user.id, role: user.role, tokenType: TokenType.REFRESH_TOKEN },
+                { secret: this.refreshTokenSecret, expiresIn: this.refreshTokenExp },
+            ),
         ]);
 
-        return {
-            accessToken,
-            refreshToken,
-        };
+        return { accessToken, refreshToken };
     }
 
     async login(data: AuthLoginDto): Promise<AuthResponseDto> {
         const { email, password } = data;
-
-        const user = await this.userService.getUserByEmail(email);
+        const user = await this.userAuthService.getUserProfileByEmail(email);
 
         if (!user) {
-            throw new NotFoundException('user.userNotFound');
+            throw new NotFoundException('User not found');
         }
 
-        const match = this.hashService.match(user.password, password);
-
-        if (!match) {
-            throw new NotFoundException('user.invalidPassword');
+        const isPasswordValid = this.hashService.match(user.password, password);
+        if (!isPasswordValid) {
+            throw new NotFoundException('Invalid password');
         }
 
-        const { accessToken, refreshToken } = await this.generateTokens({
-            id: user.id,
-            role: user.role,
-        });
+        const tokens = await this.generateTokens({ id: user.id, role: user.role });
 
-        return {
-            accessToken,
-            refreshToken,
-            user,
-        };
+        return { ...tokens, user };
     }
 
     async signup(data: AuthSignupDto): Promise<AuthResponseDto> {
         const { email, firstName, lastName, password } = data;
-        const findByEmail = await this.userService.getUserByEmail(email);
+        const existingUser = await this.userAuthService.getUserProfileByEmail(email);
 
-        if (findByEmail) {
-            throw new ConflictException('user.userExistsByEmail');
+        if (existingUser) {
+            throw new ConflictException('User already exists with this email');
         }
 
-        const passwordHashed = this.hashService.createHash(password);
-
-        const createdUser = await this.userService.createUser({
+        const hashedPassword = this.hashService.createHash(password);
+        const createdUser = await this.userAuthService.createUser({
             email,
             firstName: firstName ?? '',
             lastName: lastName ?? '',
-            password: passwordHashed,
+            password: hashedPassword,
         });
 
-        if (!createdUser || !createdUser.id || !createdUser.role) {
+        if (!createdUser?.id || !createdUser?.role) {
             throw new Error('Failed to create user');
         }
 
@@ -131,9 +95,6 @@ export class AuthService implements IAuthService {
             role: createdUser.role,
         });
 
-        return {
-            ...tokens,
-            user: createdUser,
-        };
+        return { ...tokens, user: createdUser };
     }
 }

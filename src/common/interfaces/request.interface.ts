@@ -1,10 +1,12 @@
-import type { Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 
 export interface IAuthUserPayload {
-    userId: string;
+    id: string;
     role: Role;
 }
 
-export interface IRequest {
+export interface IRequestWithUser extends Request {
     user: IAuthUserPayload;
+    requestId?: string;
+    correlationId?: string;
 }

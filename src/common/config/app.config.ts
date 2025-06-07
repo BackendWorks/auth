@@ -1,59 +1,55 @@
-import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { registerAs } from '@nestjs/config';
+import { IAppConfig } from '../interfaces/config.interface';
 
-export default registerAs(
-    'app',
-    (): {
-        [key: string]:
-            | string
-            | number
-            | boolean
-            | CorsOptions
-            | { [key: string]: string | number | boolean };
-    } => {
-        const corsOrigins =
-            process.env.APP_CORS_ORIGINS !== '*'
-                ? process.env.APP_CORS_ORIGINS.split(',').map(origin => origin.trim())
-                : true;
+export default registerAs('app', (): IAppConfig => {
+    const corsOriginsEnv = process.env.APP_CORS_ORIGINS;
+    const corsOrigin: boolean | string[] =
+        !corsOriginsEnv || corsOriginsEnv === '*'
+            ? true
+            : corsOriginsEnv.split(',').map(origin => origin.trim());
 
-        const corsConfig: CorsOptions = {
-            origin: corsOrigins,
+    return {
+        env: process.env.NODE_ENV || 'development',
+        name: process.env.APP_NAME || 'NestJS Auth Service',
+
+        versioning: {
+            enable: process.env.HTTP_VERSIONING_ENABLE === 'true',
+            prefix: process.env.HTTP_VERSION_PREFIX || 'v',
+            version: process.env.HTTP_VERSION || '1',
+        },
+
+        throttle: {
+            ttl: parseInt(process.env.THROTTLE_TTL || '60', 10),
+            limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+        },
+
+        http: {
+            host: process.env.HTTP_HOST || '0.0.0.0',
+            port: parseInt(process.env.HTTP_PORT || '9001', 10),
+        },
+
+        cors: {
+            origin: corsOrigin,
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+            allowedHeaders: [
+                'Content-Type',
+                'Authorization',
+                'Accept',
+                'Origin',
+                'X-Requested-With',
+                'X-Request-ID',
+                'X-Correlation-ID',
+            ],
             credentials: true,
-            exposedHeaders: ['Content-Range', 'X-Content-Range'],
-        };
+            exposedHeaders: ['Content-Range', 'X-Content-Range', 'X-Request-ID'],
+        },
 
-        return {
-            env: process.env.APP_ENV ?? 'local',
-            name: process.env.APP_NAME ?? 'Auth Service',
+        sentry: {
+            dsn: process.env.SENTRY_DSN,
+            env: process.env.NODE_ENV || 'development',
+        },
 
-            versioning: {
-                enable: process.env.HTTP_VERSIONING_ENABLE === 'true',
-                prefix: 'v',
-                version: process.env.HTTP_VERSION ?? '1',
-            },
-
-            throttle: {
-                ttl: 60,
-                limit: 10,
-            },
-
-            http: {
-                host: process.env.HTTP_HOST ?? '0.0.0.0',
-                port: process.env.HTTP_PORT ? Number.parseInt(process.env.HTTP_PORT) : 9001,
-            },
-
-            cors: corsConfig,
-
-            sentry: {
-                dsn: process.env.SENTRY_DSN,
-                env: process.env.NODE_ENV ?? 'local',
-            },
-
-            globalPrefix: '/',
-            debug: process.env.APP_DEBUG === 'true',
-            logLevel: process.env.APP_LOG_LEVEL ?? 'info',
-        };
-    },
-);
+        debug: process.env.APP_DEBUG === 'true',
+        logLevel: process.env.APP_LOG_LEVEL || 'info',
+    };
+});

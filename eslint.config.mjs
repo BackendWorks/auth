@@ -1,97 +1,49 @@
-import eslintConfigPrettier from 'eslint-config-prettier';
-import tsEsLintPlugin from '@typescript-eslint/eslint-plugin';
+import typescriptEslint from '@typescript-eslint/eslint-plugin';
+import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
-import tsEslint from 'typescript-eslint';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import js from '@eslint/js';
+import { FlatCompat } from '@eslint/eslintrc';
 
-const rules = tsEslint.configs.recommended
-    .map(config => config.rules)
-    .filter(rules => rules !== undefined)
-    .reduce((a, b) => ({ ...b, ...a }), {});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all,
+});
 
 export default [
-    eslintConfigPrettier,
     {
-        ignores: [
-            '.github/*',
-            '.husky/*',
-            'coverage/*',
-            'dist/*',
-            'node_modules/*',
-            '**/**/*.json',
-        ],
+        ignores: ['**/*.d.ts', '**/node_modules/', '**/*.js'],
     },
+    ...compat.extends('plugin:@typescript-eslint/recommended', 'prettier'),
     {
-        name: 'ts/default',
-        files: ['src/**/*.ts'],
+        plugins: {
+            '@typescript-eslint': typescriptEslint,
+        },
+
         languageOptions: {
-            ecmaVersion: 'latest',
-            sourceType: 'module',
+            globals: {
+                ...globals.node,
+                ...globals.jest,
+            },
+
             parser: tsParser,
+            ecmaVersion: 2018,
+            sourceType: 'commonjs',
+
             parserOptions: {
-                project: 'tsconfig.json',
-                tsconfigRootDir: '.',
+                source: 'module',
             },
         },
-        linterOptions: {
-            noInlineConfig: true,
-            reportUnusedDisableDirectives: true,
-        },
-        plugins: {
-            '@typescript-eslint': tsEsLintPlugin,
-        },
+
         rules: {
-            ...rules,
             '@typescript-eslint/no-explicit-any': 'off',
-            'no-unused-vars': 'off',
-            '@typescript-eslint/no-unused-vars': [
-                'warn',
-                {
-                    args: 'all',
-                    argsIgnorePattern: '^_',
-                    caughtErrors: 'all',
-                    caughtErrorsIgnorePattern: '^_',
-                    destructuredArrayIgnorePattern: '^_',
-                    varsIgnorePattern: '^_',
-                    ignoreRestSiblings: true,
-                },
-            ],
-        },
-    },
-    {
-        name: 'ts/test',
-        files: ['test/**/*.spec.ts'],
-        languageOptions: {
-            ecmaVersion: 'latest',
-            sourceType: 'module',
-            parser: tsParser,
-            parserOptions: {
-                project: 'tsconfig.json',
-                tsconfigRootDir: '.',
-            },
-        },
-        linterOptions: {
-            noInlineConfig: false,
-            reportUnusedDisableDirectives: true,
-        },
-        plugins: {
-            '@typescript-eslint': tsEsLintPlugin,
-        },
-        rules: {
-            ...rules,
-            '@typescript-eslint/no-explicit-any': 'off',
-            'no-unused-vars': 'off',
-            '@typescript-eslint/no-unused-vars': [
-                'warn',
-                {
-                    args: 'all',
-                    argsIgnorePattern: '^_',
-                    caughtErrors: 'all',
-                    caughtErrorsIgnorePattern: '^_',
-                    destructuredArrayIgnorePattern: '^_',
-                    varsIgnorePattern: '^_',
-                    ignoreRestSiblings: true,
-                },
-            ],
+            '@typescript-eslint/explicit-function-return-type': 'off',
+            '@typescript-eslint/interface-name-prefix': 'off',
+            '@typescript-eslint/camelcase': 'off',
         },
     },
 ];

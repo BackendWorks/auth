@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -7,20 +7,32 @@ export class AuthJwtRefreshGuard extends AuthGuard('jwt-refresh') {
         super();
     }
 
-    handleRequest<TUser = unknown | boolean>(
+    canActivate(context: ExecutionContext) {
+        const isRpc = context.getType() === 'rpc';
+
+        if (isRpc) {
+            return true;
+        }
+
+        return super.canActivate(context);
+    }
+
+    handleRequest<TUser = any>(
         err: Error,
         user: TUser,
-        _info: Error,
-        context,
+        info: Error,
+        context: ExecutionContext,
     ): TUser {
         const isRpc = context.getType() === 'rpc';
+
         if (isRpc) {
-            return;
+            return user;
         }
 
         if (err || !user) {
-            throw new UnauthorizedException('auth.refreshTokenUnauthorized');
+            throw new UnauthorizedException('Refresh token is invalid or expired');
         }
+
         return user;
     }
 }
