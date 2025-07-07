@@ -10,9 +10,9 @@ import { AuthGrpcController } from './controllers/auth.grpc.controller';
 
 @Module({
     imports: [
-        CommonModule,
-        PassportModule.register({ session: false }),
         JwtModule.register({}),
+        PassportModule.register({ session: false }),
+        CommonModule,
         UserModule,
     ],
     controllers: [AuthPublicController, AuthGrpcController],

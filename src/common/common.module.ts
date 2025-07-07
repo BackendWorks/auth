@@ -15,9 +15,8 @@ import { HashService } from './services/hash.service';
 import { DatabaseService } from './services/database.service';
 import { ResponseExceptionFilter } from './filters/exception.filter';
 import { RequestMiddleware } from './middlewares/request.middleware';
-import { QueryBuilderService } from './services/query.builder.service';
+import { QueryBuilderService } from './services/query-builder.service';
 import Joi from 'joi';
-import { GrpcModule } from 'nestjs-grpc';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
@@ -100,14 +99,6 @@ import { CacheableMemory } from 'cacheable';
                 watch: process.env.NODE_ENV === 'development',
             },
             resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
-        }),
-        GrpcModule.forRootAsync({
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                url: configService.get<string>('grpc.url'),
-                package: configService.get<string>('grpc.package'),
-                protoPath: join(__dirname, '../protos/auth.proto'),
-            }),
         }),
     ],
     providers: [

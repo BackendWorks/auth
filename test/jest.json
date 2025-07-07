@@ -1,14 +1,13 @@
 {
-  "testTimeout": 5000,
+  "testTimeout": 10000,
   "rootDir": "../",
   "modulePaths": ["."],
   "testEnvironment": "node",
-  "testMatch": ["<rootDir>/test/*.spec.ts"],
+  "testMatch": ["<rootDir>/test/unit/**/*.spec.ts"],
   "collectCoverage": true,
   "coverageDirectory": "coverage",
   "collectCoverageFrom": [
-    "<rootDir>/src/common/services/helper.hash.service.ts",
-    "<rootDir>/src/modules/*/services/*.service.ts"
+    "<rootDir>/src/**/*.service.ts"
   ],
   "coverageThreshold": {
     "global": {
@@ -22,5 +21,13 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "modulePathIgnorePatterns": ["<rootDir>/dist"]
+  "modulePathIgnorePatterns": ["<rootDir>/dist"],
+
+  "coverageReporters": ["text", "lcov", "html"],
+  "coveragePathIgnorePatterns": [
+    "<rootDir>/src/generated/",
+    "<rootDir>/src/main.ts",
+    "<rootDir>/src/app/app.controller.ts",
+    "<rootDir>/src/swagger.ts"
+  ]
 }

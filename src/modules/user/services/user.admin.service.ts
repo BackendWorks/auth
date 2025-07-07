@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserListDto } from '../dtos/user-list.dto';
 import { DatabaseService } from 'src/common/services/database.service';
 import { UserResponseDto } from '../dtos/user.response.dto';
-import { QueryBuilderService } from 'src/common/services/query.builder.service';
+import { QueryBuilderService } from 'src/common/services/query-builder.service';
 
 @Injectable()
 export class UserAdminService {

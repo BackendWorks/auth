@@ -1,14 +1,14 @@
 import { Controller, Delete, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
-import { AdminOnly } from 'src/common/decorators/auth.roles.decorator';
+import { AdminOnly } from 'src/common/decorators/auth-roles.decorator';
 import { MessageKey } from 'src/common/decorators/message.decorator';
 import { SwaggerGenericResponse, SwaggerPaginatedResponse } from 'src/common/dtos/api-response.dto';
 
 import { UserAdminService } from '../services/user.admin.service';
 import { UserListDto } from '../dtos/user-list.dto';
 import { UserResponseDto } from '../dtos/user.response.dto';
-import { PaginatedResult } from 'src/common/interfaces/query.builder.interface';
+import { PaginatedResult } from 'src/common/interfaces/query-builder.interface';
 
 @ApiTags('user.admin')
 @Controller({ version: '1', path: '/admin/user' })

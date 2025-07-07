@@ -9,9 +9,9 @@ export class DatabaseService extends PrismaClient implements OnModuleInit, OnMod
     async onModuleInit(): Promise<void> {
         try {
             await this.$connect();
-            this.logger.log('✅ Database connection established');
+            this.logger.log('Database connection established');
         } catch (error) {
-            this.logger.error('❌ Failed to connect to database', error);
+            this.logger.error('Failed to connect to database', error);
             throw error;
         }
     }
@@ -19,9 +19,9 @@ export class DatabaseService extends PrismaClient implements OnModuleInit, OnMod
     async onModuleDestroy(): Promise<void> {
         try {
             await this.$disconnect();
-            this.logger.log('🔌 Database connection closed');
+            this.logger.log('Database connection closed');
         } catch (error) {
-            this.logger.error('❌ Error closing database connection', error);
+            this.logger.error('Error closing database connection', error);
         }
     }
 

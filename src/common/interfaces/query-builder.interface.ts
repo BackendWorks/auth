@@ -18,3 +18,11 @@ export interface PaginatedResult<T> {
         hasPreviousPage: boolean;
     };
 }
+
+export interface QueryParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: string;
+    order?: 'asc' | 'desc';
+}

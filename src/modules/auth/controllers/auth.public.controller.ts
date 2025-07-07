@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { AuthUser } from 'src/common/decorators/auth.user.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { MessageKey } from 'src/common/decorators/message.decorator';
 import { PublicRoute } from 'src/common/decorators/public.decorator';
 import { AuthJwtRefreshGuard } from 'src/common/guards/jwt.refresh.guard';

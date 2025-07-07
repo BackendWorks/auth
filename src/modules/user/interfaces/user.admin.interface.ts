@@ -1,4 +1,4 @@
-import { PaginatedResult } from 'src/common/interfaces/query.builder.interface';
+import { PaginatedResult } from 'src/common/interfaces/query-builder.interface';
 import { UserListDto } from '../dtos/user-list.dto';
 import { UserResponseDto } from '../dtos/user.response.dto';
 

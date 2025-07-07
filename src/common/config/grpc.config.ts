@@ -7,6 +7,6 @@ export default registerAs('grpc', (): IGrpcConfig => {
 
     return {
         url: grpcUrl,
-        package: grpcPackage || 'auth',
+        package: grpcPackage,
     };
 });

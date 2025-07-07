@@ -2,9 +2,9 @@ import { Body, Controller, Get, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 
 import { UserAuthService } from '../services/user.auth.service';
-import { UserAndAdmin } from 'src/common/decorators/auth.roles.decorator';
+import { UserAndAdmin } from 'src/common/decorators/auth-roles.decorator';
 import { MessageKey } from 'src/common/decorators/message.decorator';
-import { AuthUser } from 'src/common/decorators/auth.user.decorator';
+import { AuthUser } from 'src/common/decorators/auth-user.decorator';
 import { SwaggerResponse } from 'src/common/dtos/api-response.dto';
 
 import { UserResponseDto } from '../dtos/user.response.dto';

@@ -10,7 +10,7 @@ export default registerAs('app', (): IAppConfig => {
 
     return {
         env: process.env.NODE_ENV || 'development',
-        name: process.env.APP_NAME || 'NestJS Auth Service',
+        name: process.env.APP_NAME || 'NestJS Service',
 
         versioning: {
             enable: process.env.HTTP_VERSIONING_ENABLE === 'true',

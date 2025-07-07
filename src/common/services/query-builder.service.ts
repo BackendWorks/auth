@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from './database.service';
-import { PaginatedResult, QueryBuilderOptions } from '../interfaces/query.builder.interface';
+import { PaginatedResult, QueryBuilderOptions } from '../interfaces/query-builder.interface';
 
 @Injectable()
 export class QueryBuilderService {
@@ -16,28 +16,28 @@ export class QueryBuilderService {
             customFilters = {},
         } = options;
 
-        const page = dto.page || 1;
-        const limit = Math.min(dto.limit || 10, 100);
+        const page = Number(dto.page) || 1;
+        const limit = Math.min(Number(dto.limit) || 10, 100);
         const skip = (page - 1) * limit;
         const sortBy = dto.sortBy || defaultSort.field;
         const sortOrder = dto.sortOrder || defaultSort.order;
 
-        const whereClause = this.buildWhereClause(dto, searchFields, customFilters);
-        const includeClause = this.buildIncludeClause(relations);
+        const where = this.buildWhereClause(dto, searchFields, customFilters);
+        const include = this.buildIncludeClause(relations);
         const modelAccessor = this.databaseService[model as keyof DatabaseService] as any;
 
         const [items, total] = await Promise.all([
             modelAccessor.findMany({
-                where: whereClause,
+                where,
                 skip,
                 take: limit,
                 orderBy: { [sortBy]: sortOrder },
-                ...(Object.keys(includeClause).length > 0 && { include: includeClause }),
+                include: Object.keys(include).length ? include : undefined,
             }),
-            modelAccessor.count({ where: whereClause }),
+            modelAccessor.count({ where }),
         ]);
 
-        const totalPages = Math.ceil(total / limit);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
             items,
@@ -57,67 +57,62 @@ export class QueryBuilderService {
         searchFields: string[],
         customFilters: Record<string, any>,
     ): any {
-        const whereClause: any = { deletedAt: null };
+        const where: any = { deletedAt: null };
 
-        if (dto.search && searchFields.length > 0) {
-            whereClause.OR = searchFields.map(field => ({
+        if (dto.search && searchFields.length) {
+            where.OR = searchFields.map(field => ({
                 [field]: { contains: dto.search, mode: 'insensitive' },
             }));
         }
 
-        Object.keys(dto).forEach(key => {
-            const value = dto[key];
-
+        for (const [key, value] of Object.entries(dto)) {
             if (
                 ['page', 'limit', 'search', 'sortBy', 'sortOrder'].includes(key) ||
                 value === undefined ||
                 value === null
-            ) {
-                return;
-            }
+            )
+                continue;
 
             if (key.endsWith('Domain') && typeof value === 'string') {
-                whereClause[key.replace('Domain', '')] = { endsWith: `@${value}` };
+                where[key.replace('Domain', '')] = { endsWith: `@${value}` };
             } else if (key.includes('Date') && typeof value === 'string') {
-                whereClause[key] = { gte: new Date(value) };
+                where[key] = { gte: new Date(value) };
             } else if (Array.isArray(value)) {
-                whereClause[key] = { in: value };
+                where[key] = { in: value };
             } else if (typeof value === 'string' && key.includes('Name')) {
-                whereClause[key] = { contains: value, mode: 'insensitive' };
+                where[key] = { contains: value, mode: 'insensitive' };
             } else {
-                whereClause[key] = value;
+                where[key] = value;
             }
-        });
+        }
 
-        Object.assign(whereClause, customFilters);
-        return whereClause;
+        return { ...where, ...customFilters };
     }
 
     private buildIncludeClause(relations: string[]): any {
-        const includeClause: any = {};
-        relations.forEach(relation => {
-            if (relation.includes('.')) {
-                const parts = relation.split('.');
-                let current = includeClause;
-                parts.forEach((part, index) => {
-                    if (index === parts.length - 1) {
-                        current[part] = true;
-                    } else {
-                        current[part] = current[part] || { include: {} };
-                        current = current[part].include;
-                    }
-                });
-            } else {
-                includeClause[relation] = true;
+        const include: any = {};
+        for (const relation of relations) {
+            if (!relation.includes('.')) {
+                include[relation] = true;
+                continue;
             }
-        });
-        return includeClause;
+            const parts = relation.split('.');
+            let curr = include;
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (i === parts.length - 1) {
+                    curr[part] = true;
+                } else {
+                    curr[part] = curr[part] || { include: {} };
+                    curr = curr[part].include;
+                }
+            }
+        }
+        return include;
     }
 
     async getCount(model: string, filters?: any): Promise<number> {
         const modelAccessor = this.databaseService[model as keyof DatabaseService] as any;
-        return modelAccessor.count({
-            where: { deletedAt: null, ...filters },
-        });
+        return modelAccessor.count({ where: { deletedAt: null, ...filters } });
     }
 }

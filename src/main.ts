@@ -2,8 +2,10 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+import { join } from 'path';
 
 import { AppModule } from './app/app.module';
 import { setupSwagger } from './swagger';
@@ -130,9 +132,29 @@ async function bootstrap() {
         process.exit(1);
     });
 
+    // Setup gRPC microservice
+    const grpcUrl = configService.get<string>('grpc.url');
+    const grpcPackage = configService.get<string>('grpc.package');
+
+    const grpcOptions: MicroserviceOptions = {
+        transport: Transport.GRPC,
+        options: {
+            package: grpcPackage,
+            protoPath: join(__dirname, '../src/protos/auth.proto'),
+            url: grpcUrl,
+        },
+    };
+
     try {
+        // Start HTTP server
         await app.listen(port, host);
-        logger.log(`🚀 ${appName} started at http://${host}:${port}`);
+        logger.log(`🚀 ${appName} HTTP server started at http://${host}:${port}`);
+
+        // Start gRPC server
+        app.connectMicroservice<MicroserviceOptions>(grpcOptions);
+        await app.startAllMicroservices();
+        logger.log(`🔌 gRPC server started at ${grpcUrl}`);
+
         if (env !== 'production') {
             logger.log(`📖 Swagger available at http://${host}:${port}/docs`);
         }
