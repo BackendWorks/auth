@@ -6,7 +6,6 @@ import { CommonModule } from 'src/common/common.module';
 import { AuthPublicController } from './controllers/auth.public.controller';
 import { AuthService } from './services/auth.service';
 import { UserModule } from '../user/user.module';
-import { AuthGrpcController } from './controllers/auth.grpc.controller';
 
 @Module({
     imports: [
@@ -15,7 +14,7 @@ import { AuthGrpcController } from './controllers/auth.grpc.controller';
         CommonModule,
         UserModule,
     ],
-    controllers: [AuthPublicController, AuthGrpcController],
+    controllers: [AuthPublicController],
     providers: [AuthService],
     exports: [AuthService],
 })

@@ -4,7 +4,7 @@
     "private": true,
     "engines": {
         "node": ">=18.0.0",
-        "npm": ">=9.0.0"      
+        "npm": ">=9.0.0"
     },
     "scripts": {
         "prebuild": "rimraf dist",
@@ -12,7 +12,7 @@
         "build:prod": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "node dist/main",
-        "dev": "nest start --watch",
+        "dev": "npm run proto:generate && nest start --watch",
         "lint": "eslint \"{src,test}/**/*.ts\" --fix",
         "test": "jest --config test/jest.json --runInBand",
         "proto:generate": "npx nestjs-grpc generate --proto ./src/protos --output ./src/generated",
@@ -49,7 +49,7 @@
         "helmet": "^8.0.0",
         "ioredis": "^5.6.1",
         "joi": "^17.13.3",
-        "nestjs-grpc": "^1.3.1",
+        "nestjs-grpc": "file:.yalc/nestjs-grpc",
         "nestjs-i18n": "^10.4.9",
         "passport": "^0.7.0",
         "passport-jwt": "^4.0.1",

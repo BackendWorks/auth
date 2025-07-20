@@ -1,16 +1,18 @@
-import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
-import { AuthService } from '../services/auth.service';
+import { GrpcController, GrpcMethod } from 'nestjs-grpc';
 import { ValidateTokenRequest, ValidateTokenResponse } from 'src/generated/auth';
+import { AuthService } from 'src/modules/auth/services/auth.service';
 
-@Controller()
+@GrpcController('AuthService')
 export class AuthGrpcController {
     constructor(private readonly authService: AuthService) {}
 
-    @GrpcMethod('AuthService', 'ValidateToken')
+    @GrpcMethod('ValidateToken')
     async validateToken(data: ValidateTokenRequest): Promise<ValidateTokenResponse> {
         if (!data.token) {
-            return { success: false };
+            return {
+                success: false,
+                payload: null,
+            };
         }
 
         try {
@@ -23,7 +25,10 @@ export class AuthGrpcController {
                 },
             };
         } catch {
-            return { success: false };
+            return {
+                success: false,
+                payload: null,
+            };
         }
     }
 }
