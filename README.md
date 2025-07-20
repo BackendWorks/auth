@@ -76,41 +76,38 @@ src/
    ```
 
 3. **Environment Configuration**
-   Create `.env` and `.env.docker` files with the following variables:
+   The service includes a pre-configured `.env.docker` file with the following variables:
    ```env
    # App Configuration
-   NODE_ENV=development
-   APP_NAME=NestJS Auth Service
-   APP_DEBUG=false
-   APP_CORS_ORIGINS=http://localhost:3000
+   NODE_ENV="local"
+   APP_NAME="@backendworks/auth"
+   APP_CORS_ORIGINS="*"
+   APP_DEBUG=true
 
    # HTTP Configuration
    HTTP_ENABLE=true
-   HTTP_HOST=0.0.0.0
+   HTTP_HOST="0.0.0.0"
    HTTP_PORT=9001
-   HTTP_VERSIONING_ENABLE=false
+   HTTP_VERSIONING_ENABLE=true
    HTTP_VERSION=1
 
    # Database Configuration
-   DATABASE_URL=postgresql://username:password@localhost:5432/auth_db
+   DATABASE_URL="postgresql://admin:master123@localhost:5432/postgres?schema=public"
 
    # JWT Configuration
-   ACCESS_TOKEN_SECRET_KEY=your-access-token-secret-key-min-32-chars
-   ACCESS_TOKEN_EXPIRED=15m
-   REFRESH_TOKEN_SECRET_KEY=your-refresh-token-secret-key-min-32-chars
-   REFRESH_TOKEN_EXPIRED=7d
+   ACCESS_TOKEN_SECRET_KEY="EAJYjNJUnRGJ6uq1YfGw4NG1pd1z102J"
+   ACCESS_TOKEN_EXPIRED="1d"
+   REFRESH_TOKEN_SECRET_KEY="LcnlpiuHIJ6eS51u1mcOdk0P49r2Crwu"
+   REFRESH_TOKEN_EXPIRED="7d"
 
    # Redis Configuration
-   REDIS_URL=redis://localhost:6379
-   REDIS_KEY_PREFIX=auth:
+   REDIS_URL="redis://localhost:6379"
+   REDIS_KEY_PREFIX="auth:"
    REDIS_TTL=3600
 
    # gRPC Configuration
-   GRPC_URL=0.0.0.0:50051
-   GRPC_PACKAGE=auth
-
-   # Monitoring (Optional)
-   SENTRY_DSN=your-sentry-dsn
+   GRPC_URL="0.0.0.0:50051"
+   GRPC_PACKAGE="auth"
    ```
 
 4. **Database Setup**
@@ -154,22 +151,19 @@ docker run -p 9001:9001 auth-service
 ### Authentication Endpoints
 
 #### Public Endpoints
-- `POST /auth/signup` - User registration
 - `POST /auth/login` - User login
-- `POST /auth/refresh` - Refresh access token
+- `POST /auth/signup` - User registration
+- `GET /auth/refresh` - Refresh access token
 
 #### Protected Endpoints
-- `GET /auth/profile` - Get user profile
-- `PUT /auth/profile` - Update user profile
-- `POST /auth/logout` - User logout
+- `GET /user/profile` - Get user profile
+- `PUT /user/profile` - Update user profile
 
 ### User Management Endpoints
 
 #### Admin Only
-- `GET /admin/users` - List all users (paginated)
-- `GET /admin/users/:id` - Get user by ID
-- `PUT /admin/users/:id` - Update user
-- `DELETE /admin/users/:id` - Delete user
+- `GET /admin/user` - List all users (paginated)
+- `DELETE /admin/user/:id` - Delete user
 
 ### Health Check
 - `GET /health` - Service health status
@@ -179,31 +173,6 @@ docker run -p 9001:9001 auth-service
 
 ### AuthService
 - `ValidateToken` - Validate JWT tokens and return user information
-
-## 🗄️ Database Schema
-
-### User Model
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR UNIQUE NOT NULL,
-  password VARCHAR,
-  first_name VARCHAR,
-  last_name VARCHAR,
-  avatar VARCHAR,
-  is_verified BOOLEAN DEFAULT false,
-  phone_number VARCHAR,
-  role Role NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  deleted_at TIMESTAMP
-);
-```
-
-### Role Enum
-```sql
-CREATE TYPE Role AS ENUM ('ADMIN', 'USER');
-```
 
 ## 🔧 Configuration
 
